@@ -1,0 +1,431 @@
+# Complete CRM Project Rebuild Prompt
+
+## Project Overview
+Create a full-stack CRM (Customer Relationship Management) application with the following specifications:
+
+### Technology Stack
+- **Frontend**: React 18 + TypeScript + Vite + Material-UI (MUI) v5
+- **Backend**: Node.js + Express + TypeScript + TypeORM
+- **Database**: PostgreSQL (NOT MongoDB)
+- **Authentication**: JWT-based authentication
+- **State Management**: React Context API
+- **Styling**: Material-UI with custom theme
+- **Rich Text Editor**: TipTap for notes
+- **Charts**: Chart.js with react-chartjs-2
+
+## Project Structure
+```
+crm-project/
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── entities/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── scripts/
+│   │   └── index.ts
+│   ├── package.json
+│   └── tsconfig.json
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── contexts/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── types/
+│   │   ├── utils/
+│   │   ├── constants/
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── package.json
+│   └── vite.config.ts
+└── package.json
+```
+
+## Backend Requirements
+
+### Database Entities (TypeORM)
+
+#### Account Entity
+```typescript
+- id: string (UUID, primary key)
+- name: string
+- email: string
+- phone: string
+- address: string
+- industry: string (nullable)
+- website: string (nullable)
+- description: string (nullable)
+- businessUseCase: string
+- techStack: string
+- health: number (0-100)
+- revenue: number (decimal)
+- renewalDate: Date
+- arr: number (decimal)
+- riskScore: number (0-100)
+- lastTouchpoint: Date (nullable)
+- nextScheduled: Date (nullable)
+- accountManager: string (user ID)
+- customerSuccessManager: string (user ID)
+- salesEngineer: string (user ID)
+- tierId: string
+- status: 'active' | 'at-risk' | 'inactive'
+- employees: number
+- createdAt: Date
+- updatedAt: Date
+```
+
+#### Contact Entity
+```typescript
+- id: string (UUID, primary key)
+- accountId: string (foreign key to Account)
+- firstName: string
+- lastName: string
+- email: string
+- phone: string
+- title: string (nullable)
+- isPrimary: boolean
+- createdAt: Date
+- updatedAt: Date
+```
+
+#### Task Entity
+```typescript
+- _id: string (UUID, primary key)
+- title: string
+- description: string
+- status: 'To Do' | 'In Progress' | 'Completed'
+- priority: 'Low' | 'Medium' | 'High'
+- dueDate: Date
+- assignedTo: string (user ID)
+- assignedToClient: string (contact ID, nullable)
+- accountId: string (foreign key to Account)
+- accountName: string
+- subTasks: SubTask[]
+- dependencies: string[]
+- isDependent: boolean
+- progress: number (0-100)
+- createdAt: Date
+- updatedAt: Date
+```
+
+#### Note Entity
+```typescript
+- id: string (UUID, primary key)
+- accountId: string (foreign key to Account)
+- contactId: string (foreign key to Contact, nullable)
+- content: string
+- author: string
+- type: 'general' | 'meeting' | 'call' | 'email'
+- tags: string[]
+- isPrivate: boolean
+- createdAt: Date
+- updatedAt: Date
+```
+
+#### User Entity
+```typescript
+- id: string (UUID, primary key)
+- email: string
+- name: string
+- role: 'admin' | 'user'
+- createdAt: Date
+- updatedAt: Date
+```
+
+#### AccountTier Entity
+```typescript
+- id: string (UUID, primary key)
+- name: string
+- description: string
+- slaHours: number
+- createdAt: Date
+- updatedAt: Date
+```
+
+#### HealthScore Entity
+```typescript
+- id: string (UUID, primary key)
+- accountId: string (foreign key to Account)
+- score: number (0-100)
+- factors: string[]
+- date: Date
+- createdAt: Date
+```
+
+#### AccountActivity Entity
+```typescript
+- id: string (UUID, primary key)
+- accountId: string (foreign key to Account)
+- type: string
+- description: string
+- date: Date
+- createdAt: Date
+```
+
+### API Endpoints
+
+#### Authentication
+- POST /api/auth/login
+- POST /api/auth/logout
+- GET /api/auth/me
+
+#### Accounts
+- GET /api/accounts
+- GET /api/accounts/:id
+- POST /api/accounts
+- PATCH /api/accounts/:id
+- DELETE /api/accounts/:id
+
+#### Contacts
+- GET /api/accounts/:accountId/contacts
+- GET /api/accounts/:accountId/contacts/:contactId
+- POST /api/accounts/:accountId/contacts
+- PATCH /api/accounts/:accountId/contacts/:contactId
+- DELETE /api/accounts/:accountId/contacts/:contactId
+
+#### Tasks
+- GET /api/tasks
+- GET /api/tasks/:id
+- POST /api/tasks
+- PATCH /api/tasks/:id
+- DELETE /api/tasks/:id
+
+#### Notes
+- GET /api/accounts/:accountId/notes
+- POST /api/accounts/:accountId/notes
+- DELETE /api/accounts/:accountId/notes/:noteId
+
+#### Dashboard
+- GET /api/dashboard/metrics
+- GET /api/dashboard/recent-activities
+
+#### Settings
+- GET /api/settings/account-tiers
+- POST /api/settings/account-tiers
+- GET /api/settings/health-scores
+- POST /api/settings/health-scores
+
+#### Internal Users
+- GET /api/users/internal
+- POST /api/users/internal
+- PATCH /api/users/internal/:id
+- DELETE /api/users/internal/:id
+
+### Backend Dependencies
+```json
+{
+  "express": "^4.18.2",
+  "cors": "^2.8.5",
+  "helmet": "^7.0.0",
+  "morgan": "^1.10.0",
+  "dotenv": "^16.3.1",
+  "pg": "^8.14.1",
+  "typeorm": "^0.3.22",
+  "reflect-metadata": "^0.2.2",
+  "express-validator": "^7.0.1"
+}
+```
+
+## Frontend Requirements
+
+### Core Features
+
+#### 1. Authentication System
+- Login page with email/password
+- JWT token storage and management
+- Protected routes based on user roles
+- Role-based access control (admin vs regular user)
+
+#### 2. Dashboard
+- Key metrics overview (total accounts, tasks, revenue)
+- Recent activities feed
+- Quick action buttons
+- Charts showing account health distribution
+- Revenue trends
+
+#### 3. Account Management
+- Account list with search and filtering
+- Account detail view with tabs:
+  - Overview (account details, metrics)
+  - Contacts (expandable contact cards)
+  - Tasks (Kanban board)
+  - Notes (rich text editor)
+- Account creation/editing form
+- Account status management
+
+#### 4. Contact Management
+- Contact list with search
+- Contact detail view
+- Contact creation/editing form
+- Primary contact designation
+- Contact expansion to show related tasks and notes
+
+#### 5. Task Management
+- Kanban board with three columns: To Do, In Progress, Completed
+- Calendar view for task scheduling
+- Task creation/editing form
+- Task filtering and search
+- Task assignment to internal users and clients
+- Subtask management
+- Task dependencies
+- Progress tracking
+
+#### 6. Notes System
+- Rich text editor (TipTap) for notes
+- Note categorization (general, meeting, call, email)
+- Note privacy settings
+- Note linking to contacts
+
+#### 7. Settings (Admin Only)
+- Account tier management
+- Health score configuration
+- Internal user management
+- SLA settings
+
+#### 8. Integrations (Admin Only)
+- Third-party service connections
+- API key management
+
+### UI/UX Requirements
+
+#### Material-UI Theme
+- Custom theme with primary/secondary colors
+- Consistent spacing and typography
+- Responsive design for mobile/tablet/desktop
+- Dark/light mode support (optional)
+
+#### Components
+- Reusable form components
+- Data tables with sorting/filtering
+- Modal dialogs for forms
+- Confirmation dialogs
+- Loading states and error handling
+- Toast notifications
+
+#### Layout
+- Sidebar navigation
+- Header with user info and logout
+- Main content area
+- Breadcrumb navigation
+
+### Frontend Dependencies
+```json
+{
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0",
+  "react-router-dom": "^6.11.1",
+  "@mui/material": "^5.13.0",
+  "@mui/icons-material": "^5.11.16",
+  "@mui/x-data-grid": "^6.4.0",
+  "@mui/x-date-pickers": "^6.4.0",
+  "@tiptap/react": "^2.11.7",
+  "@tiptap/starter-kit": "^2.11.7",
+  "@tiptap/extension-placeholder": "^2.11.7",
+  "@tiptap/extension-typography": "^2.11.7",
+  "chart.js": "^4.4.8",
+  "react-chartjs-2": "^5.3.0",
+  "axios": "^1.8.4",
+  "date-fns": "^2.30.0",
+  "typescript": "^4.9.5"
+}
+```
+
+## Key Implementation Details
+
+### State Management
+- Use React Context API for global state
+- Separate contexts for:
+  - User authentication
+  - Tasks
+  - Accounts
+  - UI state (modals, loading)
+
+### API Integration
+- Centralized API service with axios
+- Error handling and loading states
+- Request/response interceptors
+- JWT token management
+
+### Database Setup
+- PostgreSQL database with proper indexes
+- Foreign key relationships
+- Data validation and constraints
+- Seed data for testing
+
+### Security
+- JWT authentication
+- Input validation
+- SQL injection prevention
+- CORS configuration
+- Helmet security headers
+
+### Performance
+- Lazy loading for routes
+- Optimistic updates
+- Debounced search
+- Pagination for large datasets
+
+## Development Setup Instructions
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 14+
+- npm or yarn
+
+### Environment Variables
+Create `.env` files for both backend and frontend:
+
+Backend (.env):
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=crm_app
+JWT_SECRET=your-secret-key
+PORT=3000
+NODE_ENV=development
+```
+
+Frontend (.env):
+```
+VITE_API_URL=http://localhost:3000/api
+```
+
+### Database Setup
+1. Create PostgreSQL database named 'crm_app'
+2. Run database migrations
+3. Seed initial data (users, account tiers, etc.)
+
+### Running the Application
+1. Install dependencies: `npm run install:all`
+2. Start backend: `cd backend && npm run dev`
+3. Start frontend: `cd frontend && npm run dev`
+4. Access application at http://localhost:5173
+
+## Testing Requirements
+- Unit tests for critical business logic
+- API endpoint testing
+- Component testing with React Testing Library
+- Integration tests for user workflows
+
+## Deployment Considerations
+- Environment-specific configurations
+- Database migrations
+- Static file serving
+- SSL/TLS setup
+- Monitoring and logging
+
+## Additional Notes
+- Focus on clean, maintainable code
+- Follow TypeScript best practices
+- Implement proper error handling
+- Add comprehensive documentation
+- Consider accessibility (WCAG guidelines)
+- Implement responsive design
+- Add loading states and user feedback
+- Include data validation on both frontend and backend
+
+This prompt provides all the necessary information to rebuild the complete CRM application. The AI should use its own logic and understanding to implement the features while following the specified requirements and architecture. 
