@@ -71,6 +71,17 @@ export interface Contact {
   notes?: Note[];
 }
 
+// Category types
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Task types
 export interface SubTask {
   id: string;
@@ -92,6 +103,9 @@ export interface Task {
   subTasks: SubTask[];
   dependencies: string[];
   isDependent: boolean;
+  tags?: string[];
+  categoryId?: string;
+  category?: Category;
   progress: number;
   createdAt: string;
   updatedAt: string;

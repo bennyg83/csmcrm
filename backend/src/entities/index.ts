@@ -5,4 +5,5 @@ export { Contact } from "./Contact";
 export { Task } from "./Task";
 export { Note } from "./Note";
 export { HealthScore } from "./HealthScore";
-export { AccountActivity } from "./AccountActivity"; 
+export { AccountActivity } from "./AccountActivity";
+export { Category } from "./Category"; 

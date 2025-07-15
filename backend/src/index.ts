@@ -76,6 +76,7 @@ import noteRoutes from "./routes/notes";
 import healthScoreRoutes from "./routes/healthScores";
 import accountActivityRoutes from "./routes/accountActivities";
 import accountTierRoutes from "./routes/accountTiers";
+import categoryRoutes from "./routes/categories";
 
 // API routes
 app.use("/api/auth", authRoutes);
@@ -86,6 +87,7 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/health-scores", healthScoreRoutes);
 app.use("/api/account-activities", accountActivityRoutes);
 app.use("/api/account-tiers", accountTierRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

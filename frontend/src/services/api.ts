@@ -7,6 +7,7 @@ import {
   Note, 
   AccountTier,
   AccountActivity,
+  Category,
   LoginResponse,
   ApiResponse,
   DashboardMetrics,
@@ -186,6 +187,31 @@ class ApiService {
 
   async deleteAccountTier(id: string): Promise<void> {
     await this.api.delete(`/account-tiers/${id}`);
+  }
+
+  // Categories
+  async getCategories(): Promise<Category[]> {
+    const response: AxiosResponse<Category[]> = await this.api.get('/categories');
+    return response.data;
+  }
+
+  async getCategory(id: string): Promise<Category> {
+    const response: AxiosResponse<Category> = await this.api.get(`/categories/${id}`);
+    return response.data;
+  }
+
+  async createCategory(category: Partial<Category>): Promise<Category> {
+    const response: AxiosResponse<Category> = await this.api.post('/categories', category);
+    return response.data;
+  }
+
+  async updateCategory(id: string, category: Partial<Category>): Promise<Category> {
+    const response: AxiosResponse<Category> = await this.api.patch(`/categories/${id}`, category);
+    return response.data;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await this.api.delete(`/categories/${id}`);
   }
 
   // Notes

@@ -60,6 +60,14 @@ export class Task {
   @Column({ default: false })
   isDependent!: boolean;
 
+  @Column({ type: "json", default: [] })
+  @IsOptional()
+  tags?: string[];
+
+  @Column({ nullable: true })
+  @IsOptional()
+  categoryId?: string;
+
   @Column({ type: "int" })
   @Min(0)
   @Max(100)
@@ -74,4 +82,8 @@ export class Task {
   @ManyToOne("Account", "tasks")
   @JoinColumn({ name: "accountId" })
   account!: any;
+
+  @ManyToOne("Category", "tasks")
+  @JoinColumn({ name: "categoryId" })
+  category!: any;
 } 
