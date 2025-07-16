@@ -77,7 +77,7 @@ import healthScoreRoutes from "./routes/healthScores";
 import accountActivityRoutes from "./routes/accountActivities";
 import accountTierRoutes from "./routes/accountTiers";
 import categoryRoutes from "./routes/categories";
-
+import documentRoutes from "./routes/documents";
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/accounts", accountRoutes);
@@ -88,6 +88,7 @@ app.use("/api/health-scores", healthScoreRoutes);
 app.use("/api/account-activities", accountActivityRoutes);
 app.use("/api/account-tiers", accountTierRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/documents", documentRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

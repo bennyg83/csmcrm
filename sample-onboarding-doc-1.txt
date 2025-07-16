@@ -1,0 +1,57 @@
+CUSTOMER ONBOARDING DOCUMENT - FINANCIAL SERVICES
+
+COMPANY INFORMATION:
+Company: SecureBank Financial Solutions
+Email: onboarding@securebank.com
+Phone: +1-555-9876
+Address: 456 Wall Street, New York, NY 10005
+Industry: Financial Services
+Website: https://securebank.com
+
+BUSINESS OBJECTIVES:
+Short-term: Implement real-time fraud detection system using Mend security scanning
+Mid-term: Expand security monitoring to mobile banking applications
+Long-term: Achieve SOC 2 Type II compliance with automated security controls
+
+IMPLEMENTATION ROADMAP:
+Short Term: Deploy Mend integration with existing CI/CD pipeline for code scanning
+Mid-term: Add container security scanning and vulnerability assessment
+Longer-term: Implement automated security gates and compliance reporting dashboard
+
+TECHNICAL INFRASTRUCTURE:
+Repos: GitLab Enterprise (gitlab.securebank.com)
+Pipelines: GitLab CI/CD, Jenkins
+Languages: Java, Spring Boot, React, TypeScript
+Container Repos: AWS ECR, Azure Container Registry
+Issue Trackers: JIRA, ServiceNow, PagerDuty
+
+KEY STAKEHOLDERS:
+Contact: Maria Rodriguez, Geo: North America, Focus: CISO, KPIs: Security posture improvement, Other: Former government security expert
+Contact: James Chen, Geo: APAC, Focus: DevOps Director, KPIs: Deployment frequency, Other: Passionate about DevSecOps
+Contact: Sarah Williams, Geo: Europe, Focus: Compliance Manager, KPIs: Audit readiness, Other: Expert in financial regulations
+
+GROWTH OPPORTUNITIES:
+Compliance expansion: Additional regulatory frameworks (PCI DSS, GDPR)
+Steps: Implement automated compliance scanning and reporting tools
+
+CRITICAL ISSUES:
+Ticket #SEC-001: High-priority vulnerability in authentication module
+Ticket #SEC-002: Performance impact of security scanning on build times
+
+PROJECT TRACKING:
+TKA-789: Implement automated security scanning
+WSH-456: Set up compliance monitoring dashboard
+Slack Chain: #securebank-security for ongoing discussions
+
+FINANCIAL METRICS:
+Revenue: $15,000,000
+ARR: $3,000,000
+Employees: 500
+Health Score: 92
+Risk Score: 15
+Renewal Date: 2025-06-30
+
+TEAM ASSIGNMENTS:
+Account Manager: Robert Johnson
+Customer Success Manager: Lisa Thompson
+Sales Engineer: Michael Davis 

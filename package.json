@@ -1,6 +1,6 @@
 {
   "name": "crm-project",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "Full-stack CRM application",
   "scripts": {
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",

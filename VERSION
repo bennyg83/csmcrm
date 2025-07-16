@@ -1,0 +1,19 @@
+2.1.0
+
+# CRM System Version History
+# v2.1.0 - Enhanced Document Processing & LLM Integration
+# - Added Ollama LLM integration for document processing
+# - Enhanced document upload and extraction capabilities
+# - Improved account onboarding with document parsing
+# - Fixed backend port conflicts and stability issues
+# - Enhanced task management with comprehensive features
+# - Added proper version control with trunk-based development
+
+# v2.0.0 - Baseline CRM System
+# - Complete CRM system with React/TypeScript frontend
+# - Node.js/PostgreSQL backend with TypeORM
+# - User authentication and authorization
+# - Account and contact management
+# - Task management with categories, priorities, and dependencies
+# - Dashboard with analytics and charts
+# - Docker containerization 

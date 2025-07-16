@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -16,6 +14,18 @@ services:
     networks:
       - crm-network
 
+  # Ollama LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: crm-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - crm-network
+    restart: unless-stopped
+
   # Backend API
   backend:
     build:
@@ -30,13 +40,16 @@ services:
       DB_USER: crm_user
       DB_PASSWORD: crm_password
       JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      OLLAMA_ENDPOINT: http://ollama:11434
     ports:
       - "3000:3000"
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - ./uploads:/app/uploads
     depends_on:
       - postgres
+      - ollama
     networks:
       - crm-network
     command: npm run dev
@@ -58,10 +71,11 @@ services:
       - backend
     networks:
       - crm-network
-    command: npm run dev
+    command: npm run dev -- --host 0.0.0.0
 
 volumes:
   postgres_data:
+  ollama_data:
 
 networks:
   crm-network:

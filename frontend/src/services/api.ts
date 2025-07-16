@@ -294,6 +294,30 @@ class ApiService {
     const response: AxiosResponse<DashboardMetrics> = await this.api.get('/dashboard/metrics');
     return response.data;
   }
+
+  // Document Processing
+  async processHandoverDocument(formData: FormData): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/documents/process-handover', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
+  async uploadDocument(formData: FormData): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/documents/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  }
+
+  async getLLMStatus(): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get('/documents/llm-status');
+    return response.data;
+  }
 }
 
 export const apiService = new ApiService();

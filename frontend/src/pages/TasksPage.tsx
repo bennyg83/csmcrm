@@ -646,6 +646,11 @@ const TasksPage: React.FC = () => {
                   <TableRow 
                     key={task.id} 
                     hover
+                    sx={{ 
+                      cursor: 'pointer',
+                      '&:hover': { backgroundColor: 'action.hover' }
+                    }}
+                    onClick={() => setSelectedTask(task)}
                   >
                     <TableCell>
                       <Box>
@@ -655,7 +660,10 @@ const TasksPage: React.FC = () => {
                             cursor: 'pointer',
                             '&:hover': { textDecoration: 'underline' }
                           }}
-                          onClick={() => setSelectedTask(task)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTask(task);
+                          }}
                         >
                           {task.title}
                         </Typography>
@@ -717,26 +725,13 @@ const TasksPage: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        <Tooltip title="View Details">
-                          <IconButton 
-                            size="small" 
-                            onClick={() => setSelectedTask(task)}
-                          >
-                            <ViewIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Edit Task">
-                          <IconButton 
-                            size="small" 
-                            onClick={() => openTaskDialog(task)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
                         <Tooltip title="Delete Task">
                           <IconButton 
                             size="small" 
-                            onClick={() => handleDeleteTask(task.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTask(task.id);
+                            }}
                             color="error"
                           >
                             <DeleteIcon fontSize="small" />
@@ -1176,59 +1171,181 @@ const TasksPage: React.FC = () => {
             <>
               <DialogTitle>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="h6">{selectedTask.title}</Typography>
+                  <Typography variant="h6">Edit Task</Typography>
                   <IconButton onClick={() => setSelectedTask(null)}>
                     <ClearIcon />
                   </IconButton>
                 </Box>
               </DialogTitle>
               <DialogContent>
-                <Grid container spacing={2}>
+                <Grid container spacing={2} sx={{ mt: 1 }}>
                   <Grid item xs={12}>
-                    <Typography variant="body1" paragraph>
-                      {selectedTask.description}
+                    <TextField
+                      fullWidth
+                      label="Title"
+                      value={selectedTask.title}
+                      onChange={(e) => setSelectedTask(prev => prev ? { ...prev, title: e.target.value } : null)}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Description"
+                      multiline
+                      rows={3}
+                      value={selectedTask.description}
+                      onChange={(e) => setSelectedTask(prev => prev ? { ...prev, description: e.target.value } : null)}
+                    />
+                  </Grid>
+                  <Grid item xs={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Status</InputLabel>
+                      <Select
+                        value={selectedTask.status}
+                        onChange={(e) => setSelectedTask(prev => prev ? { ...prev, status: e.target.value as any } : null)}
+                        label="Status"
+                      >
+                        <MenuItem value="To Do">To Do</MenuItem>
+                        <MenuItem value="In Progress">In Progress</MenuItem>
+                        <MenuItem value="Completed">Completed</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <FormControl fullWidth>
+                      <InputLabel>Priority</InputLabel>
+                      <Select
+                        value={selectedTask.priority}
+                        onChange={(e) => setSelectedTask(prev => prev ? { ...prev, priority: e.target.value as any } : null)}
+                        label="Priority"
+                      >
+                        <MenuItem value="Low">Low</MenuItem>
+                        <MenuItem value="Medium">Medium</MenuItem>
+                        <MenuItem value="High">High</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel>Account</InputLabel>
+                      <Select
+                        value={selectedTask.accountId}
+                        onChange={(e) => setSelectedTask(prev => prev ? { ...prev, accountId: e.target.value } : null)}
+                        label="Account"
+                      >
+                        {accounts.map((account) => (
+                          <MenuItem key={account.id} value={account.id}>
+                            {account.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <InputLabel>Category</InputLabel>
+                      <Select
+                        value={selectedTask.categoryId || ''}
+                        onChange={(e) => setSelectedTask(prev => prev ? { ...prev, categoryId: e.target.value } : null)}
+                        label="Category"
+                      >
+                        <MenuItem value="">No Category</MenuItem>
+                        {categories.map((category) => (
+                          <MenuItem key={category.id} value={category.id}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box
+                                sx={{
+                                  width: 12,
+                                  height: 12,
+                                  borderRadius: '50%',
+                                  backgroundColor: category.color
+                                }}
+                              />
+                              {category.name}
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Tags (comma-separated)"
+                      value={(selectedTask.tags || []).join(', ')}
+                      onChange={(e) => setSelectedTask(prev => prev ? { 
+                        ...prev, 
+                        tags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+                      } : null)}
+                      placeholder="bug, frontend, urgent"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <DateTimePicker
+                      label="Due Date"
+                      value={new Date(selectedTask.dueDate)}
+                      onChange={(newValue) => setSelectedTask(prev => prev ? { 
+                        ...prev, 
+                        dueDate: (newValue || new Date()).toISOString() 
+                      } : null)}
+                      slotProps={{ textField: { fullWidth: true } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <UserAutocomplete
+                      label="Assigned To (Internal)"
+                      value={Array.isArray(selectedTask.assignedTo) ? selectedTask.assignedTo : [selectedTask.assignedTo]}
+                      onChange={(value) => setSelectedTask(prev => prev ? { ...prev, assignedTo: value } : null)}
+                      context="internal"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <UserAutocomplete
+                      label="Assigned To Client"
+                      value={Array.isArray(selectedTask.assignedToClient) ? selectedTask.assignedToClient : selectedTask.assignedToClient ? [selectedTask.assignedToClient] : []}
+                      onChange={(value) => setSelectedTask(prev => prev ? { ...prev, assignedToClient: value } : null)}
+                      context="external"
+                      accountId={selectedTask.accountId}
+                      accountContacts={accounts.find(a => a.id === selectedTask.accountId)?.contacts || []}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography gutterBottom>Progress</Typography>
+                    <Slider
+                      value={selectedTask.progress}
+                      onChange={(_, value) => setSelectedTask(prev => prev ? { ...prev, progress: value as number } : null)}
+                      valueLabelDisplay="auto"
+                      min={0}
+                      max={100}
+                    />
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedTask.progress}%
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="subtitle2" color="text.secondary">Status</Typography>
-                    <Chip 
-                      label={selectedTask.status} 
-                      color={getStatusColor(selectedTask.status) as any}
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="subtitle2" color="text.secondary">Priority</Typography>
-                    <Chip 
-                      label={selectedTask.priority} 
-                      color={getPriorityColor(selectedTask.priority) as any}
-                      size="small"
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="subtitle2" color="text.secondary">Account</Typography>
-                    <Typography variant="body2">{selectedTask.accountName}</Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="subtitle2" color="text.secondary">Due Date</Typography>
-                    <Typography variant="body2">{formatDate(selectedTask.dueDate)}</Typography>
-                  </Grid>
-                  {selectedTask.categoryId && (
-                    <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Category</Typography>
-                      {getCategoryDisplay(selectedTask)}
-                    </Grid>
-                  )}
-                  {selectedTask.tags && selectedTask.tags.length > 0 && (
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">Tags</Typography>
-                      <Box sx={{ mt: 1 }}>
-                        {getTagsDisplay(selectedTask)}
-                      </Box>
-                    </Grid>
-                  )}
                 </Grid>
               </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setSelectedTask(null)}>Cancel</Button>
+                <Button 
+                  onClick={async () => {
+                    if (selectedTask) {
+                      try {
+                        await apiService.updateTask(selectedTask.id, selectedTask);
+                        // Refresh tasks
+                        const updatedTasks = await apiService.getTasks();
+                        setTasks(updatedTasks);
+                        setSelectedTask(null);
+                      } catch (error) {
+                        console.error('Error updating task:', error);
+                        setError('Failed to update task');
+                      }
+                    }
+                  }} 
+                  variant="contained"
+                >
+                  Save Changes
+                </Button>
+              </DialogActions>
             </>
           )}
         </Dialog>

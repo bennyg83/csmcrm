@@ -1,0 +1,55 @@
+STARTUP ONBOARDING - QUICK HANDOVER
+
+COMPANY: CloudScale Startup
+EMAIL: hello@cloudscale.io
+PHONE: +1-555-5678
+ADDRESS: 321 Innovation Way, San Francisco, CA 94105
+INDUSTRY: SaaS/Cloud Computing
+WEBSITE: https://cloudscale.io
+
+GOALS:
+SHORT-TERM: Implement automated security scanning for MVP
+MID-TERM: Scale security practices as company grows
+LONG-TERM: Build enterprise-grade security platform
+
+PLAN:
+SHORT: Set up Mend in GitHub Actions for code scanning
+MID: Add container security and dependency scanning
+LONG: Implement security gates and compliance automation
+
+TECH:
+REPOS: GitHub (github.com/cloudscale)
+PIPELINES: GitHub Actions, CircleCI
+LANGUAGES: Node.js, React, Python, Go
+CONTAINERS: Docker Hub, AWS ECR
+TRACKING: Linear, Notion, Slack
+
+TEAM:
+Contact: Rachel Green, Geo: US, Focus: CTO, KPIs: Product velocity, Other: Y Combinator alum
+Contact: Tom Anderson, Geo: Europe, Focus: Lead Developer, KPIs: Code quality, Other: Open source contributor
+
+GROWTH:
+Product expansion: Add security monitoring dashboard
+Steps: Build customer-facing security insights
+
+ISSUES:
+Ticket #STARTUP-001: Need security scanning for new microservices
+Ticket #STARTUP-002: Compliance requirements for enterprise customers
+
+PROJECTS:
+TKA-333: Implement security scanning pipeline
+WSH-444: Build security dashboard
+Slack: #cloudscale-dev for development team
+
+METRICS:
+Revenue: $500,000
+ARR: $100,000
+Employees: 25
+Health Score: 95
+Risk Score: 20
+Renewal: 2025-09-01
+
+TEAM:
+Account Manager: Sarah Parker
+Customer Success Manager: Mike Johnson
+Sales Engineer: Chris Lee 

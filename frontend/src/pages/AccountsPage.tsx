@@ -40,12 +40,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Account } from '../types';
+import OnboardingQuestionnaire from '../components/OnboardingQuestionnaire';
 
 const AccountsPage: React.FC = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addAccountOpen, setAddAccountOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [addAccountForm, setAddAccountForm] = useState<Partial<Account>>({});
   const navigate = useNavigate();
 
@@ -127,6 +129,19 @@ const AccountsPage: React.FC = () => {
     }
   };
 
+  const handleOnboardingSuccess = () => {
+    // Refresh accounts list
+    const fetchAccounts = async () => {
+      try {
+        const data = await apiService.getAccounts();
+        setAccounts(data);
+      } catch (err) {
+        console.error('Error fetching accounts:', err);
+      }
+    };
+    fetchAccounts();
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -157,20 +172,36 @@ const AccountsPage: React.FC = () => {
             Manage your customer accounts and relationships
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddAccount}
-          sx={{ 
-            px: 3, 
-            py: 1.5,
-            borderRadius: 2,
-            textTransform: 'none',
-            fontWeight: 600
-          }}
-        >
-          Add Account
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={() => setOnboardingOpen(true)}
+            sx={{ 
+              px: 3, 
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600
+            }}
+          >
+            Onboarding Questionnaire
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddAccount}
+            sx={{ 
+              px: 3, 
+              py: 1.5,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600
+            }}
+          >
+            Quick Add Account
+          </Button>
+        </Box>
       </Box>
       
       {accounts.length === 0 ? (
@@ -194,20 +225,36 @@ const AccountsPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
               Create your first account to get started with customer relationship management.
             </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddAccount}
-              sx={{ 
-                px: 3, 
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 600
-              }}
-            >
-              Create First Account
-            </Button>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => setOnboardingOpen(true)}
+                sx={{ 
+                  px: 3, 
+                  py: 1.5,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600
+                }}
+              >
+                Start Onboarding
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleAddAccount}
+                sx={{ 
+                  px: 3, 
+                  py: 1.5,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600
+                }}
+              >
+                Quick Add Account
+              </Button>
+            </Box>
           </CardContent>
         </Card>
       ) : (
@@ -507,6 +554,13 @@ const AccountsPage: React.FC = () => {
           <Button onClick={handleAddAccountSave} variant="contained">Create Account</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Onboarding Questionnaire */}
+      <OnboardingQuestionnaire
+        open={onboardingOpen}
+        onClose={() => setOnboardingOpen(false)}
+        onSuccess={handleOnboardingSuccess}
+      />
     </Box>
   );
 };
