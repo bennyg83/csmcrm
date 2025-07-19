@@ -26,7 +26,10 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  OutlinedInput,
+  Checkbox,
+  ListItemText as MuiListItemText
 } from '@mui/material';
 import { 
   Add as AddIcon,
@@ -35,12 +38,19 @@ import {
   Phone as PhoneIcon,
   TrendingUp as TrendingUpIcon,
   Warning as WarningIcon,
-  Circle as CircleIcon
+  Circle as CircleIcon,
+  Search as SearchIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Account } from '../types';
 import OnboardingQuestionnaire from '../components/OnboardingQuestionnaire';
+
+const CSM_OPTIONS = ['Amanda Lee', 'Robert Taylor', 'Jennifer Smith', 'Michael Chen'];
+const AM_OPTIONS = ['Michael Chen', 'David Wilson', 'Sarah Johnson'];
+const SE_OPTIONS = ['Alex Thompson', 'Tom Anderson', 'Rachel Green'];
+const TIER_OPTIONS = ['Enterprise', 'Business', 'Starter'];
+const HEALTH_OPTIONS = ['Healthy', 'At Risk', 'Critical'];
 
 const AccountsPage: React.FC = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -50,6 +60,14 @@ const AccountsPage: React.FC = () => {
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [addAccountForm, setAddAccountForm] = useState<Partial<Account>>({});
   const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+
+  // Filter state
+  const [selectedCSMs, setSelectedCSMs] = useState<string[]>([]);
+  const [selectedAM, setSelectedAM] = useState('');
+  const [selectedSE, setSelectedSE] = useState('');
+  const [selectedTier, setSelectedTier] = useState('');
+  const [selectedHealth, setSelectedHealth] = useState('');
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -68,6 +86,50 @@ const AccountsPage: React.FC = () => {
 
     fetchAccounts();
   }, []);
+
+  // Filter accounts based on search and selected filters
+  const filteredAccounts = accounts.filter(account => {
+    // Search filter
+    if (search) {
+      const searchLower = search.toLowerCase();
+      if (!account.name.toLowerCase().includes(searchLower) &&
+          !(account.email && account.email.toLowerCase().includes(searchLower)) &&
+          !(account.customerSuccessManager && account.customerSuccessManager.toLowerCase().includes(searchLower)) &&
+          !(account.accountManager && account.accountManager.toLowerCase().includes(searchLower)) &&
+          !(account.salesEngineer && account.salesEngineer.toLowerCase().includes(searchLower))) {
+        return false;
+      }
+    }
+    // CSM filter
+    if (selectedCSMs.length > 0 && !selectedCSMs.includes(account.customerSuccessManager || '')) {
+      return false;
+    }
+    
+    // Account Manager filter
+    if (selectedAM && account.accountManager !== selectedAM) {
+      return false;
+    }
+    
+    // Solutions Engineer filter
+    if (selectedSE && account.salesEngineer !== selectedSE) {
+      return false;
+    }
+    
+    // Tier filter
+    if (selectedTier && account.tierId !== selectedTier) {
+      return false;
+    }
+    
+    // Health filter
+    if (selectedHealth) {
+      const health = account.health;
+      if (selectedHealth === 'Healthy' && health < 80) return false;
+      if (selectedHealth === 'At Risk' && (health >= 80 || health < 60)) return false;
+      if (selectedHealth === 'Critical' && health >= 60) return false;
+    }
+    
+    return true;
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -203,359 +265,309 @@ const AccountsPage: React.FC = () => {
           </Button>
         </Box>
       </Box>
-      
-      {accounts.length === 0 ? (
-        <Card>
-          <CardContent sx={{ textAlign: 'center', py: 8 }}>
-            <Avatar 
-              sx={{ 
-                width: 80, 
-                height: 80, 
-                bgcolor: 'primary.light', 
-                color: 'primary.main',
-                mx: 'auto',
-                mb: 2
-              }}
-            >
-              <BusinessIcon sx={{ fontSize: 40 }} />
-            </Avatar>
-            <Typography variant="h6" gutterBottom>
-              No accounts found
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Create your first account to get started with customer relationship management.
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-              <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
-                onClick={() => setOnboardingOpen(true)}
-                sx={{ 
-                  px: 3, 
-                  py: 1.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600
-                }}
-              >
-                Start Onboarding
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleAddAccount}
-                sx={{ 
-                  px: 3, 
-                  py: 1.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600
-                }}
-              >
-                Quick Add Account
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Account</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Industry</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Health</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Revenue</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>License ARR</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Renewal</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Employees</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Account Manager</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {accounts.map((account) => (
-                  <TableRow 
-                    key={account.id} 
-                    hover 
-                    onClick={() => navigate(`/accounts/${account.id}`)}
-                    sx={{ 
-                      cursor: 'pointer',
-                      '&:hover': {
-                        backgroundColor: 'action.hover',
-                      }
-                    }}
-                  >
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar 
-                          sx={{ 
-                            bgcolor: 'primary.light', 
-                            color: 'primary.main',
-                            width: 40,
-                            height: 40
-                          }}
-                        >
-                          {account.name.charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                            {account.name}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                            <EmailIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                            <Typography variant="caption" color="text.secondary">
-                              {account.email}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={account.industry || 'N/A'} 
-                        size="small"
-                        variant="outlined"
-                        sx={{ fontSize: '0.75rem' }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={account.status} 
-                        color={getStatusColor(account.status) as any}
-                        size="small"
-                        icon={account.status === 'active' ? <TrendingUpIcon /> : <WarningIcon />}
-                        sx={{ 
-                          fontSize: '0.75rem',
-                          fontWeight: 500
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <CircleIcon 
-                          sx={{ 
-                            fontSize: 12, 
-                            color: getHealthColor(account.health) 
-                          }} 
-                        />
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            fontWeight: 600,
-                            color: getHealthColor(account.health)
-                          }}
-                        >
-                          {account.health}%
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        ${account.revenue.toLocaleString()}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        ${account.arr.toLocaleString()}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {(() => {
-                          const renewal = new Date(account.renewalDate);
-                          const today = new Date();
-                          const diffTime = renewal.getTime() - today.getTime();
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                          return `${diffDays} days`;
-                        })()}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {account.employees.toLocaleString()}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {account.accountManager}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Card>
-      )}
 
-      {/* Add Account Modal */}
-      <Dialog open={addAccountOpen} onClose={() => setAddAccountOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Create New Account</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {/* Search Bar and Filters */}
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <TextField
-            label="Account Name"
-            value={addAccountForm.name || ''}
-            onChange={(e) => handleAddAccountChange('name', e.target.value)}
             fullWidth
-            size="small"
+            placeholder="Search accounts or contacts..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+              sx: { borderRadius: 8, background: '#fff' }
+            }}
+            sx={{ mr: 0, flex: 1, borderRadius: 8 }}
           />
-          <TextField
-            label="Email"
-            value={addAccountForm.email || ''}
-            onChange={(e) => handleAddAccountChange('email', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Phone"
-            value={addAccountForm.phone || ''}
-            onChange={(e) => handleAddAccountChange('phone', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Address"
-            value={addAccountForm.address || ''}
-            onChange={(e) => handleAddAccountChange('address', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Industry"
-            value={addAccountForm.industry || ''}
-            onChange={(e) => handleAddAccountChange('industry', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Website"
-            value={addAccountForm.website || ''}
-            onChange={(e) => handleAddAccountChange('website', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Description"
-            value={addAccountForm.description || ''}
-            onChange={(e) => handleAddAccountChange('description', e.target.value)}
-            fullWidth
-            size="small"
-            multiline
-            minRows={2}
-          />
-          <TextField
-            label="Business Use Case"
-            value={addAccountForm.businessUseCase || ''}
-            onChange={(e) => handleAddAccountChange('businessUseCase', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Tech Stack"
-            value={addAccountForm.techStack || ''}
-            onChange={(e) => handleAddAccountChange('techStack', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Health Score"
-            type="number"
-            value={addAccountForm.health || ''}
-            onChange={(e) => handleAddAccountChange('health', Number(e.target.value))}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Revenue"
-            type="number"
-            value={addAccountForm.revenue || ''}
-            onChange={(e) => handleAddAccountChange('revenue', Number(e.target.value))}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="License ARR"
-            type="number"
-            value={addAccountForm.arr || ''}
-            onChange={(e) => handleAddAccountChange('arr', Number(e.target.value))}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Renewal Date"
-            type="date"
-            value={addAccountForm.renewalDate || ''}
-            onChange={(e) => handleAddAccountChange('renewalDate', e.target.value)}
-            fullWidth
-            size="small"
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            label="Risk Score"
-            type="number"
-            value={addAccountForm.riskScore || ''}
-            onChange={(e) => handleAddAccountChange('riskScore', Number(e.target.value))}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Employees"
-            type="number"
-            value={addAccountForm.employees || ''}
-            onChange={(e) => handleAddAccountChange('employees', Number(e.target.value))}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Account Manager"
-            value={addAccountForm.accountManager || ''}
-            onChange={(e) => handleAddAccountChange('accountManager', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Customer Success Manager"
-            value={addAccountForm.customerSuccessManager || ''}
-            onChange={(e) => handleAddAccountChange('customerSuccessManager', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Sales Engineer"
-            value={addAccountForm.salesEngineer || ''}
-            onChange={(e) => handleAddAccountChange('salesEngineer', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="Tier ID"
-            value={addAccountForm.tierId || ''}
-            onChange={(e) => handleAddAccountChange('tierId', e.target.value)}
-            fullWidth
-            size="small"
-          />
-          <FormControl fullWidth size="small">
-            <InputLabel>Status</InputLabel>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <FormControl sx={{ minWidth: 160 }} size="small">
+            <InputLabel>CSM</InputLabel>
             <Select
-              value={addAccountForm.status || ''}
-              label="Status"
-              onChange={(e) => handleAddAccountChange('status', e.target.value)}
+              multiple
+              value={selectedCSMs}
+              onChange={e => setSelectedCSMs(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+              input={<OutlinedInput label="CSM" />}
+              renderValue={selected => (selected as string[]).join(', ')}
             >
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="at-risk">At Risk</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
+              {CSM_OPTIONS.map(name => (
+                <MenuItem key={name} value={name}>
+                  <Checkbox checked={selectedCSMs.indexOf(name) > -1} />
+                  <MuiListItemText primary={name} />
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
+          <FormControl sx={{ minWidth: 160 }} size="small">
+            <InputLabel>Account Manager</InputLabel>
+            <Select
+              value={selectedAM}
+              onChange={e => setSelectedAM(e.target.value)}
+              label="Account Manager"
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {AM_OPTIONS.map(name => (
+                <MenuItem key={name} value={name}>{name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl sx={{ minWidth: 160 }} size="small">
+            <InputLabel>Solutions Engineer</InputLabel>
+            <Select
+              value={selectedSE}
+              onChange={e => setSelectedSE(e.target.value)}
+              label="Solutions Engineer"
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {SE_OPTIONS.map(name => (
+                <MenuItem key={name} value={name}>{name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl sx={{ minWidth: 120 }} size="small">
+            <InputLabel>Tier</InputLabel>
+            <Select
+              value={selectedTier}
+              onChange={e => setSelectedTier(e.target.value)}
+              label="Tier"
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {TIER_OPTIONS.map(name => (
+                <MenuItem key={name} value={name}>{name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl sx={{ minWidth: 120 }} size="small">
+            <InputLabel>Health</InputLabel>
+            <Select
+              value={selectedHealth}
+              onChange={e => setSelectedHealth(e.target.value)}
+              label="Health"
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {HEALTH_OPTIONS.map(name => (
+                <MenuItem key={name} value={name}>{name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
+
+      {/* Results Summary */}
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="body2" color="text.secondary">
+          Showing {filteredAccounts.length} of {accounts.length} accounts
+        </Typography>
+      </Box>
+
+      {/* Accounts Table */}
+      <Card>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Account Name</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Industry</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>AM</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>CS</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>SE/PS</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Health</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>ARR</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Renewal</TableCell>
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredAccounts.map((account) => (
+                <TableRow key={account.id} hover>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                        <BusinessIcon sx={{ fontSize: 16 }} />
+                      </Avatar>
+                      <Typography
+                        variant="body2"
+                        sx={{ 
+                          fontWeight: 600, 
+                          cursor: 'pointer',
+                          '&:hover': { color: 'primary.main' }
+                        }}
+                        onClick={() => navigate(`/accounts/${account.id}`)}
+                      >
+                        {account.name}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>{account.industry || 'N/A'}</TableCell>
+                  <TableCell>{account.accountManager || 'N/A'}</TableCell>
+                  <TableCell>{account.customerSuccessManager || 'N/A'}</TableCell>
+                  <TableCell>{account.salesEngineer || 'N/A'}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CircleIcon sx={{ fontSize: 12, color: getHealthColor(account.health) }} />
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: getHealthColor(account.health) }}>
+                        {account.health}%
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={account.status}
+                      color={getStatusColor(account.status) as any}
+                      size="small"
+                      sx={{ fontSize: '0.75rem', fontWeight: 500 }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      ${account.arr.toLocaleString()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {(() => {
+                        const renewal = new Date(account.renewalDate);
+                        const today = new Date();
+                        const diffTime = renewal.getTime() - today.getTime();
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        return `${diffDays} days`;
+                      })()}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title="View Details">
+                        <IconButton
+                          size="small"
+                          onClick={() => navigate(`/accounts/${account.id}`)}
+                        >
+                          <BusinessIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
+
+      {/* Add Account Dialog */}
+      <Dialog 
+        open={addAccountOpen} 
+        onClose={() => setAddAccountOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Add New Account</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 1 }}>
+            <TextField
+              label="Account Name"
+              value={addAccountForm.name || ''}
+              onChange={(e) => handleAddAccountChange('name', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Email"
+              type="email"
+              value={addAccountForm.email || ''}
+              onChange={(e) => handleAddAccountChange('email', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Phone"
+              value={addAccountForm.phone || ''}
+              onChange={(e) => handleAddAccountChange('phone', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Industry"
+              value={addAccountForm.industry || ''}
+              onChange={(e) => handleAddAccountChange('industry', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Website"
+              value={addAccountForm.website || ''}
+              onChange={(e) => handleAddAccountChange('website', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Account Manager"
+              value={addAccountForm.accountManager || ''}
+              onChange={(e) => handleAddAccountChange('accountManager', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Customer Success Manager"
+              value={addAccountForm.customerSuccessManager || ''}
+              onChange={(e) => handleAddAccountChange('customerSuccessManager', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Sales Engineer"
+              value={addAccountForm.salesEngineer || ''}
+              onChange={(e) => handleAddAccountChange('salesEngineer', e.target.value)}
+              fullWidth
+            />
+            <TextField
+              label="Health Score"
+              type="number"
+              value={addAccountForm.health || 75}
+              onChange={(e) => handleAddAccountChange('health', parseInt(e.target.value))}
+              fullWidth
+            />
+            <TextField
+              label="ARR"
+              type="number"
+              value={addAccountForm.arr || 0}
+              onChange={(e) => handleAddAccountChange('arr', parseInt(e.target.value))}
+              fullWidth
+            />
+            <TextField
+              label="Renewal Date"
+              type="date"
+              value={addAccountForm.renewalDate || ''}
+              onChange={(e) => handleAddAccountChange('renewalDate', e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Employees"
+              type="number"
+              value={addAccountForm.employees || 0}
+              onChange={(e) => handleAddAccountChange('employees', parseInt(e.target.value))}
+              fullWidth
+            />
+            <TextField
+              label="Address"
+              value={addAccountForm.address || ''}
+              onChange={(e) => handleAddAccountChange('address', e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+            />
+            <TextField
+              label="Description"
+              value={addAccountForm.description || ''}
+              onChange={(e) => handleAddAccountChange('description', e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+            />
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAddAccountOpen(false)}>Cancel</Button>
-          <Button onClick={handleAddAccountSave} variant="contained">Create Account</Button>
+          <Button onClick={handleAddAccountSave} variant="contained">Add Account</Button>
         </DialogActions>
       </Dialog>
 
-      {/* Onboarding Questionnaire */}
+      {/* Onboarding Questionnaire Dialog */}
       <OnboardingQuestionnaire
         open={onboardingOpen}
         onClose={() => setOnboardingOpen(false)}

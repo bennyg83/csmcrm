@@ -93,7 +93,7 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  status: 'To Do' | 'In Progress' | 'Completed';
+  status: 'To Do' | 'In Progress' | 'Completed' | 'Cancelled';
   priority: 'Low' | 'Medium' | 'High';
   dueDate: string;
   assignedTo: string | string[];

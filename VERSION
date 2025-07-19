@@ -1,6 +1,16 @@
-2.1.0
+2.2.0
 
 # CRM System Version History
+# v2.2.0 - Enhanced Task Management & Kanban Board
+# - Implemented fully functional drag-and-drop Kanban board
+# - Fixed task tracking between list and Kanban views
+# - Enhanced task editing capabilities in all views
+# - Fixed backend UUID validation issues
+# - Improved UX with proper drag-and-drop zones
+# - Cleaned up console warnings and improved error handling
+# - Added Calendar view for task management
+# - Enhanced task detail management
+
 # v2.1.0 - Enhanced Document Processing & LLM Integration
 # - Added Ollama LLM integration for document processing
 # - Enhanced document upload and extraction capabilities

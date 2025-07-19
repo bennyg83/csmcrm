@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2025-01-17
+
+### Added
+- Fully functional drag-and-drop Kanban board for task management
+- Calendar view for task visualization and management
+- Task detail page with comprehensive task information
+- Enhanced task editing capabilities across all views
+- Proper drop zones for Kanban columns and task cards
+- Visual feedback for drag-and-drop operations
+
+### Enhanced
+- Task tracking between list view and Kanban board - changes now sync immediately
+- Task editing functionality - works in both list and Kanban views
+- User experience with better drag-and-drop interactions
+- Console output - reduced warnings and debug messages
+- Error handling for task updates and status changes
+- Task status management with proper validation
+
+### Fixed
+- Task tracking issues between different views
+- Backend 500 errors when updating tasks with empty UUID fields
+- Edit button functionality in Kanban board task cards
+- Drag-and-drop confusion between task IDs and status values
+- React key prop warnings in UserAutocomplete component
+- Console warnings and debug output cleanup
+- UUID validation errors when saving tasks
+
+### Technical
+- Improved TypeScript typing for task status values
+- Better separation of draggable and clickable areas in task cards
+- Enhanced error handling for task operations
+- Optimized component re-rendering and state management
+- Cleaned up development console output
+
 ## [2.1.0] - 2024-12-19
 
 ### Added

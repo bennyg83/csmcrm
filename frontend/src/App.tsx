@@ -7,6 +7,8 @@ import DashboardPage from './pages/DashboardPage';
 import AccountsPage from './pages/AccountsPage';
 import AccountDetailPage from './pages/AccountDetailPage';
 import TasksPage from './pages/TasksPage';
+import TaskDetailPage from './pages/TaskDetailPage';
+import CalendarPage from './pages/CalendarPage';
 import SettingsPage from './pages/SettingsPage';
 import Layout from './components/Layout';
 import ContactDetailPage from './pages/ContactDetailPage';
@@ -185,6 +187,22 @@ const App: React.FC = () => {
               element={
                 <Layout>
                   <TasksPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/tasks/:id"
+              element={
+                <Layout>
+                  <TaskDetailPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <Layout>
+                  <CalendarPage />
                 </Layout>
               }
             />

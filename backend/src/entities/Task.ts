@@ -23,10 +23,10 @@ export class Task {
 
   @Column({
     type: "enum",
-    enum: ["To Do", "In Progress", "Completed"],
+    enum: ["To Do", "In Progress", "Completed", "Cancelled"],
     default: "To Do"
   })
-  status!: "To Do" | "In Progress" | "Completed";
+  status!: "To Do" | "In Progress" | "Completed" | "Cancelled";
 
   @Column({
     type: "enum",

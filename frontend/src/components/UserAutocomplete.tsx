@@ -184,27 +184,34 @@ const UserAutocomplete: React.FC<UserAutocompleteProps> = ({
         />
       )}
       renderTags={(value, getTagProps) =>
-        value.map((option, index) => (
-          <Chip
-            label={option.name}
-            {...getTagProps({ index })}
-            color={option.type === 'user' ? 'primary' : 'secondary'}
-            variant="outlined"
-          />
-        ))
+        value.map((option, index) => {
+          const { key, ...tagProps } = getTagProps({ index });
+          return (
+            <Chip
+              key={key}
+              label={option.name}
+              {...tagProps}
+              color={option.type === 'user' ? 'primary' : 'secondary'}
+              variant="outlined"
+            />
+          );
+        })
       }
-      renderOption={(props, option) => (
-        <Box component="li" {...props}>
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {option.name}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {option.email} • {option.type === 'user' ? 'Internal User' : 'Contact'}
-            </Typography>
+      renderOption={(props, option) => {
+        const { key, ...otherProps } = props;
+        return (
+          <Box component="li" key={key} {...otherProps}>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {option.name}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {option.type === 'user' ? option.email : 'Client Contact'}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
-      )}
+        );
+      }}
       filterOptions={(options, { inputValue }) => {
         const filtered = options.filter(option =>
           option.displayName.toLowerCase().includes(inputValue.toLowerCase()) ||

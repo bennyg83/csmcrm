@@ -30,7 +30,11 @@ import {
   InputLabel,
   OutlinedInput,
   Checkbox,
-  ListItemText as MuiListItemText
+  ListItemText as MuiListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   Business as BusinessIcon,
@@ -48,8 +52,9 @@ import { apiService } from '../services/api';
 import { DashboardMetrics } from '../types';
 import { Account } from '../types';
 import CircleIcon from '@mui/icons-material/Circle';
-import { Task } from '../types';
+import { Task, User } from '../types';
 import SearchIcon from '@mui/icons-material/Search';
+import UserAutocomplete from '../components/UserAutocomplete';
 
 const CSM_OPTIONS = ['Amanda Lee', 'Robert Taylor', 'Jennifer Smith', 'Michael Chen'];
 const AM_OPTIONS = ['Michael Chen', 'David Wilson', 'Sarah Johnson'];
@@ -69,7 +74,24 @@ const DashboardPage: React.FC = () => {
   const [selectedSE, setSelectedSE] = useState('');
   const [selectedTier, setSelectedTier] = useState('');
   const [selectedHealth, setSelectedHealth] = useState('');
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
   const navigate = useNavigate();
+
+  // Task form state
+  const [taskForm, setTaskForm] = useState({
+    title: '',
+    description: '',
+    status: 'To Do' as 'To Do' | 'In Progress' | 'Completed',
+    priority: 'Medium' as 'Low' | 'Medium' | 'High',
+    dueDate: new Date(),
+    assignedTo: [] as string[],
+    assignedToClient: [] as string[],
+    accountId: '',
+    categoryId: '',
+    tags: [] as string[],
+    progress: 0
+  });
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -83,6 +105,14 @@ const DashboardPage: React.FC = () => {
         const tasksData = await apiService.getTasks();
         setTasks(tasksData);
         const recentActivities = await apiService.getRecentActivities();
+        
+        // Fetch users for task assignment
+        try {
+          const usersData = await apiService.getAllUsers();
+          setUsers(usersData);
+        } catch (err) {
+          console.warn('Could not fetch users:', err);
+        }
         
         // Calculate metrics
         const totalAccounts = accountsData.length;
@@ -190,6 +220,43 @@ const DashboardPage: React.FC = () => {
     if (type === 'SE') setSelectedSE('');
     if (type === 'Tier') setSelectedTier('');
     if (type === 'Health') setSelectedHealth('');
+  };
+
+  const openTaskDialog = () => {
+    console.log('openTaskDialog called');
+    setTaskForm({
+      title: '',
+      description: '',
+      status: 'To Do',
+      priority: 'Medium',
+      dueDate: new Date(),
+      assignedTo: [],
+      assignedToClient: [],
+      accountId: '',
+      categoryId: '',
+      tags: [],
+      progress: 0
+    });
+    setTaskDialogOpen(true);
+  };
+
+  const handleSaveTask = async () => {
+    try {
+      const taskData = {
+        ...taskForm,
+        dueDate: taskForm.dueDate.toISOString()
+      };
+
+      await apiService.createTask(taskData);
+
+      // Refresh tasks
+      const updatedTasks = await apiService.getTasks();
+      setTasks(updatedTasks);
+      setTaskDialogOpen(false);
+    } catch (error) {
+      console.error('Error saving task:', error);
+      setError('Failed to save task');
+    }
   };
 
   if (loading) {
@@ -348,9 +415,39 @@ const DashboardPage: React.FC = () => {
       {/* Accounts Table Section - at the top */}
       <Box sx={{ mb: 6 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            Accounts
-          </Typography>
+          <Link
+            component={RouterLink}
+            to="/accounts"
+            underline="none"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              px: 0.5,
+              borderRadius: 1,
+              transition: 'background 0.2s, color 0.2s',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+                color: 'primary.main',
+                textDecoration: 'none',
+                '& .section-icon': {
+                  transform: 'translateX(2px)'
+                }
+              }
+            }}
+          >
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 600, transition: 'color 0.2s ease' }}
+            >
+              Accounts
+            </Typography>
+            <OpenInNewIcon
+              className="section-icon"
+              sx={{ fontSize: 18, color: 'text.secondary', transition: 'transform 0.2s, color 0.2s' }}
+            />
+          </Link>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -436,13 +533,47 @@ const DashboardPage: React.FC = () => {
       {/* Tasks Table Section - below accounts */}
       <Box sx={{ mb: 6 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h5" sx={{ fontWeight: 600 }}>
-            Tasks
-          </Typography>
+          <Link
+            component={RouterLink}
+            to="/tasks"
+            underline="none"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              px: 0.5,
+              borderRadius: 1,
+              transition: 'background 0.2s, color 0.2s',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+                color: 'primary.main',
+                textDecoration: 'none',
+                '& .section-icon': {
+                  transform: 'translateX(2px)'
+                }
+              }
+            }}
+          >
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 600, transition: 'color 0.2s ease' }}
+            >
+              Tasks
+            </Typography>
+            <OpenInNewIcon 
+              className="section-icon"
+              sx={{ 
+                fontSize: 18, 
+                color: 'text.secondary',
+                transition: 'transform 0.2s ease, color 0.2s ease'
+              }} 
+            />
+          </Link>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => console.log('Add Task clicked (dashboard)')}
+            onClick={openTaskDialog}
             sx={{ px: 3, py: 1, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
           >
             Add Task
@@ -476,6 +607,7 @@ const DashboardPage: React.FC = () => {
                           underline="hover"
                         >
                           {task.title}
+                          <OpenInNewIcon sx={{ fontSize: 16, ml: 0.5 }} />
                         </Link>
                       </TableCell>
                       <TableCell>{task.accountName || 'N/A'}</TableCell>
@@ -601,22 +733,24 @@ const DashboardPage: React.FC = () => {
                             </Typography>
                           }
                           secondary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                              <Chip
-                                label={activity.type}
-                                size="small"
-                                color="primary"
-                                variant="outlined"
-                                sx={{ fontSize: '0.75rem' }}
-                              />
-                              <Typography variant="caption" color="text.secondary">
-                                {new Date(activity.date).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric'
-                                })}
-                              </Typography>
-                            </Box>
+                            <Typography variant="caption" color="text.secondary" component="div">
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                <Chip
+                                  label={activity.type}
+                                  size="small"
+                                  color="primary"
+                                  variant="outlined"
+                                  sx={{ fontSize: '0.75rem' }}
+                                />
+                                <Typography variant="caption" color="text.secondary">
+                                  {new Date(activity.date).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </Typography>
+                              </Box>
+                            </Typography>
                           }
                         />
                       </ListItem>
@@ -637,6 +771,116 @@ const DashboardPage: React.FC = () => {
           </Card>
         </Grid>
       </Box>
+
+      {/* Task Creation Dialog */}
+      <Dialog 
+        open={taskDialogOpen} 
+        onClose={() => setTaskDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Create New Task
+        </DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Title"
+                value={taskForm.title}
+                onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Description"
+                multiline
+                rows={3}
+                value={taskForm.description}
+                onChange={(e) => setTaskForm(prev => ({ ...prev, description: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={taskForm.status}
+                  onChange={(e) => setTaskForm(prev => ({ ...prev, status: e.target.value as any }))}
+                >
+                  <MenuItem value="To Do">To Do</MenuItem>
+                  <MenuItem value="In Progress">In Progress</MenuItem>
+                  <MenuItem value="Completed">Completed</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <InputLabel>Priority</InputLabel>
+                <Select
+                  value={taskForm.priority}
+                  onChange={(e) => setTaskForm(prev => ({ ...prev, priority: e.target.value as any }))}
+                >
+                  <MenuItem value="Low">Low</MenuItem>
+                  <MenuItem value="Medium">Medium</MenuItem>
+                  <MenuItem value="High">High</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Due Date"
+                type="datetime-local"
+                value={taskForm.dueDate.toISOString().slice(0, 16)}
+                onChange={(e) => setTaskForm(prev => ({ ...prev, dueDate: new Date(e.target.value) }))}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <InputLabel>Account</InputLabel>
+                <Select
+                  value={taskForm.accountId}
+                  onChange={(e) => setTaskForm(prev => ({ ...prev, accountId: e.target.value }))}
+                >
+                  <MenuItem value=""><em>None</em></MenuItem>
+                  {accounts.map((account) => (
+                    <MenuItem key={account.id} value={account.id}>{account.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <UserAutocomplete
+                label="Assigned To (Internal)"
+                value={taskForm.assignedTo}
+                onChange={(value) => setTaskForm(prev => ({ ...prev, assignedTo: value }))}
+                context="internal"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <UserAutocomplete
+                label="Assigned To Client"
+                value={taskForm.assignedToClient}
+                onChange={(value) => setTaskForm(prev => ({ ...prev, assignedToClient: value }))}
+                context="external"
+                accountId={taskForm.accountId}
+                accountContacts={accounts.find(acc => acc.id === taskForm.accountId)?.contacts}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTaskDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleSaveTask} variant="contained">
+            Create Task
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
