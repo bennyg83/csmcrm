@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Contact, Account } from '../types';
-import { Box, Typography, CircularProgress, Alert, Card, CardContent, Avatar, Chip, Divider, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, OutlinedInput, MenuItem, Checkbox, ListItemText as MuiListItemText } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, Card, CardContent, Avatar, Chip, Divider, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, OutlinedInput, MenuItem, Checkbox, ListItemText as MuiListItemText, Grid } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EditIcon from '@mui/icons-material/Edit';
+import EmailHistory from '../components/EmailHistory';
 
 const CONTACT_TYPE_OPTIONS = [
   'DM',
@@ -127,43 +128,75 @@ const ContactDetailPage: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         {contact.firstName} {contact.lastName}
       </Typography>
-      <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap', mb: 4 }}>
-        {/* Contact Info Card */}
-        <Card sx={{ minWidth: 320, maxWidth: 400, position: 'relative' }}>
-          <CardContent>
-            <IconButton onClick={handleEditOpen} sx={{ position: 'absolute', top: 8, right: 8 }}>
-              <EditIcon />
-            </IconButton>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Avatar sx={{ bgcolor: contact.isPrimary ? 'primary.main' : 'grey.300', color: 'white', width: 56, height: 56 }}>
-                <PersonIcon />
-              </Avatar>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>{contact.firstName} {contact.lastName}</Typography>
-                <Typography variant="body2" color="text.secondary">{contact.title || ''}</Typography>
-                {contact.isPrimary && <Chip label="Primary" color="primary" size="small" sx={{ mt: 0.5 }} />}
-              </Box>
-            </Box>
-            <Divider sx={{ mb: 2 }} />
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{contact.email} | {contact.phone}</Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Button href={`mailto:${contact.email}`} startIcon={<EmailIcon />} size="small">Email</Button>
-              <Button href={`tel:${contact.phone}`} startIcon={<PhoneIcon />} size="small">Call</Button>
-            </Box>
-            {contact.contactTypes && contact.contactTypes.length > 0 && (
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>Contact Type:</Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
-                  {contact.contactTypes.map((type) => (
-                    <Chip key={type} label={type === 'Other' && contact.otherType ? contact.otherType : type} size="small" color="secondary" />
-                  ))}
+      
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          {/* Contact Info Card */}
+          <Card sx={{ minWidth: 320, maxWidth: 400, position: 'relative' }}>
+            <CardContent>
+              <IconButton onClick={handleEditOpen} sx={{ position: 'absolute', top: 8, right: 8 }}>
+                <EditIcon />
+              </IconButton>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Avatar sx={{ bgcolor: contact.isPrimary ? 'primary.main' : 'grey.300', color: 'white', width: 56, height: 56 }}>
+                  <PersonIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>{contact.firstName} {contact.lastName}</Typography>
+                  <Typography variant="body2" color="text.secondary">{contact.title || ''}</Typography>
+                  {contact.isPrimary && <Chip label="Primary" color="primary" size="small" sx={{ mt: 0.5 }} />}
                 </Box>
               </Box>
-            )}
-            <Typography variant="body2" color="text.secondary">{contact.title}</Typography>
-            <Typography variant="body2" color="text.secondary">Created: {new Date(contact.createdAt).toLocaleDateString()}</Typography>
-          </CardContent>
-        </Card>
+              <Divider sx={{ mb: 2 }} />
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{contact.email} | {contact.phone}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Button href={`mailto:${contact.email}`} startIcon={<EmailIcon />} size="small">Email</Button>
+                <Button href={`tel:${contact.phone}`} startIcon={<PhoneIcon />} size="small">Call</Button>
+              </Box>
+              
+              {contact.contactTypes && contact.contactTypes.length > 0 && (
+                <Box sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>Contact Type:</Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
+                    {contact.contactTypes.map((type) => (
+                      <Chip key={type} label={type === 'Other' && contact.otherType ? contact.otherType : type} size="small" color="secondary" />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+              <Typography variant="body2" color="text.secondary">{contact.title}</Typography>
+              <Typography variant="body2" color="text.secondary">Created: {new Date(contact.createdAt).toLocaleDateString()}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          {/* Account Info Card */}
+          {account && (
+            <Card sx={{ minWidth: 320, maxWidth: 400 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                  Account Info
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                <Typography variant="body1"><b>Name:</b> <Button component={RouterLink} to={`/accounts/${account.id}`}>{account.name}</Button></Typography>
+                <Typography variant="body2"><b>Industry:</b> {account.industry || 'N/A'}</Typography>
+                <Typography variant="body2"><b>Status:</b> <Chip label={account.status} color={account.status === 'active' ? 'success' : account.status === 'at-risk' ? 'warning' : 'default'} size="small" /></Typography>
+                <Typography variant="body2"><b>Health:</b> {account.health}%</Typography>
+                <Typography variant="body2"><b>Revenue:</b> ${account.revenue.toLocaleString()}</Typography>
+                <Typography variant="body2"><b>Account Manager:</b> {account.accountManager}</Typography>
+                <Typography variant="body2"><b>Customer Success:</b> {account.customerSuccessManager}</Typography>
+                <Typography variant="body2"><b>Sales Engineer:</b> {account.salesEngineer}</Typography>
+              </CardContent>
+            </Card>
+          )}
+        </Grid>
+
+        <Grid item xs={12}>
+          {/* Email History */}
+          <EmailHistory contactId={contact.id} title="Email History" />
+        </Grid>
+      </Grid>
         {/* Edit Contact Modal */}
         <Dialog open={editOpen} onClose={handleEditClose} maxWidth="xs" fullWidth>
           <DialogTitle>Edit Contact</DialogTitle>
@@ -235,26 +268,6 @@ const ContactDetailPage: React.FC = () => {
             <Button onClick={handleEditSave} variant="contained">Save</Button>
           </DialogActions>
         </Dialog>
-        {/* Account Info Card */}
-        {account && (
-          <Card sx={{ minWidth: 320, maxWidth: 400 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                Account Info
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              <Typography variant="body1"><b>Name:</b> <Button component={RouterLink} to={`/accounts/${account.id}`}>{account.name}</Button></Typography>
-              <Typography variant="body2"><b>Industry:</b> {account.industry || 'N/A'}</Typography>
-              <Typography variant="body2"><b>Status:</b> <Chip label={account.status} color={account.status === 'active' ? 'success' : account.status === 'at-risk' ? 'warning' : 'default'} size="small" /></Typography>
-              <Typography variant="body2"><b>Health:</b> {account.health}%</Typography>
-              <Typography variant="body2"><b>Revenue:</b> ${account.revenue.toLocaleString()}</Typography>
-              <Typography variant="body2"><b>Account Manager:</b> {account.accountManager}</Typography>
-              <Typography variant="body2"><b>Customer Success:</b> {account.customerSuccessManager}</Typography>
-              <Typography variant="body2"><b>Sales Engineer:</b> {account.salesEngineer}</Typography>
-            </CardContent>
-          </Card>
-        )}
-      </Box>
     </Box>
   );
 };

@@ -24,7 +24,8 @@ import {
   Settings as SettingsIcon,
   IntegrationInstructions as IntegrationIcon,
   Person as PersonIcon,
-  CalendarToday as CalendarIcon
+  CalendarToday as CalendarIcon,
+  Email as EmailIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -40,6 +41,7 @@ const navItems = [
   { path: '/accounts', label: 'Accounts', icon: <BusinessIcon /> },
   { path: '/tasks', label: 'Tasks', icon: <TaskIcon /> },
   { path: '/calendar', label: 'Calendar', icon: <CalendarIcon /> },
+  { path: '/email', label: 'Email', icon: <EmailIcon /> },
   { path: '/settings', label: 'Settings', icon: <SettingsIcon />, admin: true },
   { path: '/integrations', label: 'Integrations', icon: <IntegrationIcon /> },
 ];

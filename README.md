@@ -1,6 +1,6 @@
 # CRM System
 
-A modern Customer Relationship Management (CRM) system built with React, TypeScript, Node.js, and PostgreSQL. Features a comprehensive dashboard, account management, contact tracking, task management, and more.
+A modern Customer Relationship Management (CRM) system built with React, TypeScript, Node.js, and PostgreSQL. Features comprehensive dashboard, account management, contact tracking, task management, Gmail integration, and team user management.
 
 ## 🚀 Features
 
@@ -13,13 +13,28 @@ A modern Customer Relationship Management (CRM) system built with React, TypeScr
 - **Health Scoring**: Account health monitoring with customizable scoring criteria
 - **Activity Tracking**: Detailed activity logs for all account interactions
 
+### 🔧 New in v2.3.0: Gmail Integration
+- **Gmail API Integration**: Full OAuth2 authentication with Gmail API
+- **Email-Contact Linking**: Automatic email thread management linking emails to CRM contacts
+- **CSM Workflow Support**: Enhanced email linking for Customer Success Manager to Client workflows
+- **Email History Display**: Complete email conversation history in contact detail pages
+- **Advanced Email Sync**: Bidirectional email syncing with debug capabilities
+- **Email Management**: Send, reply, and manage emails directly from the CRM
+
+### 👥 New in v2.3.0: User Management System
+- **Team User Management**: Create, edit, and manage internal team users
+- **Role-Based Access Control**: Five role types (Admin, Manager, Sales, Support, User)
+- **User Creation Wizard**: Streamlined user creation with automatic password generation
+- **Enhanced Authentication**: Support for both Google SSO and internal user accounts
+- **Admin Security**: Secure admin-only endpoints with proper authorization middleware
+
 ### Technical Features
-- **Modern UI**: Material-UI components with responsive design
+- **Modern UI**: Material-UI components with responsive design and role-based indicators
 - **TypeScript**: Full type safety across frontend and backend
 - **Docker Support**: Containerized development and deployment
 - **PostgreSQL**: Robust relational database with proper indexing
-- **RESTful API**: Clean, documented API endpoints
-- **Authentication**: JWT-based authentication system
+- **RESTful API**: Clean, documented API endpoints with role-based security
+- **Authentication**: JWT-based authentication system with Google OAuth2 integration
 - **Real-time Updates**: WebSocket support for live data updates
 
 ## 🛠️ Tech Stack

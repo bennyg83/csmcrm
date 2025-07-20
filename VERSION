@@ -1,6 +1,35 @@
-2.2.0
+2.3.0
 
 # CRM System Version History
+# v2.3.0 - Gmail Integration & User Management System
+# - 🔧 MAJOR: Gmail Integration with OAuth2 authentication
+#   * Full Gmail API integration for reading, sending, and managing emails
+#   * Email-contact linking system with automatic thread management
+#   * Enhanced CSM-to-Client email workflow support
+#   * Email history display in contact detail pages
+#   * Advanced email sync with debug capabilities
+# - 👥 MAJOR: User Management System
+#   * Complete user CRUD operations for internal team management
+#   * Role-based access control (Admin, Manager, Sales, Support, User)
+#   * User creation with automatic password generation
+#   * Enhanced authentication system with Google SSO support
+#   * Secure admin-only endpoints with proper middleware
+# - 🎨 UI/UX Enhancements
+#   * New tabbed Settings page with organized sections
+#   * Enhanced email page with sync and debug capabilities
+#   * Improved user interface with role-based indicators
+#   * Better error handling and success notifications
+# - 🔐 Security Improvements
+#   * Enhanced authentication flow with proper token management
+#   * Role-based middleware for secure API endpoints
+#   * Improved password hashing and validation
+#   * Google OAuth integration with proper scope management
+# - 🐛 Bug Fixes
+#   * Fixed email linking logic for bidirectional conversations
+#   * Resolved authentication context issues
+#   * Fixed routing problems with protected routes
+#   * Improved database schema with new user roles
+
 # v2.2.0 - Enhanced Task Management & Kanban Board
 # - Implemented fully functional drag-and-drop Kanban board
 # - Fixed task tracking between list and Kanban views

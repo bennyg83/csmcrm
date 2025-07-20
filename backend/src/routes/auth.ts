@@ -1,13 +1,29 @@
-import express from "express";
-import { login, getMe, getAllUsers } from "../controllers/authController";
-import { auth } from "../middleware/auth";
+import { Router } from "express";
+import { 
+  login, 
+  logout, 
+  getMe, 
+  getAllUsers, 
+  createUser, 
+  updateUser, 
+  deleteUser 
+} from "../controllers/authController";
+import { auth, adminOnly } from "../middleware/auth";
 
-const router = express.Router();
+const router = Router();
 
+// Auth routes
 router.post("/login", login);
+router.post("/logout", logout);
 router.get("/me", auth, getMe);
-router.get("/users", auth, getAllUsers);
-// Public route for development/testing (remove in production)
+
+// User management routes (Admin only)
+router.get("/users", auth, adminOnly, getAllUsers);
+router.post("/users", auth, adminOnly, createUser);
+router.put("/users/:userId", auth, adminOnly, updateUser);
+router.delete("/users/:userId", auth, adminOnly, deleteUser);
+
+// Public route for development/testing
 router.get("/users/public", getAllUsers);
 
 export default router; 

@@ -69,6 +69,8 @@ app.get("/api/test/data", async (req, res) => {
 
 // Import routes
 import authRoutes from "./routes/auth";
+import googleAuthRoutes from "./routes/googleAuth";
+import gmailRoutes from "./routes/gmail";
 import accountRoutes from "./routes/accounts";
 import contactRoutes from "./routes/contacts";
 import taskRoutes from "./routes/tasks";
@@ -80,6 +82,8 @@ import categoryRoutes from "./routes/categories";
 import documentRoutes from "./routes/documents";
 // API routes
 app.use("/api/auth", authRoutes);
+app.use("/api/auth", googleAuthRoutes);
+app.use("/api/gmail", gmailRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/accounts", contactRoutes);
 app.use("/api/tasks", taskRoutes);

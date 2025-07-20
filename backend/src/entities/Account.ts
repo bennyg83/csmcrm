@@ -125,4 +125,7 @@ export class Account {
 
   @OneToMany("AccountActivity", "account")
   activities!: any[];
+
+  @OneToMany("Email", "account")
+  emails!: any[];
 } 

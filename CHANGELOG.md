@@ -5,89 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.2.0] - 2025-01-17
+## [2.3.0] - 2025-01-20
+
+### 🔧 Major Features Added
+
+#### Gmail Integration
+- **Full Gmail API Integration**: Complete OAuth2 authentication with Gmail API
+- **Email-Contact Linking**: Automatic email thread management linking emails to CRM contacts
+- **CSM Workflow Support**: Enhanced email linking for Customer Success Manager to Client workflows
+- **Email History Display**: Complete email conversation history in contact detail pages
+- **Advanced Email Sync**: Bidirectional email syncing with debug capabilities
+- **Email Management**: Send, reply, and manage emails directly from the CRM
+
+#### User Management System
+- **Complete User CRUD**: Create, read, update, and delete internal team users
+- **Role-Based Access Control**: Five role types (Admin, Manager, Sales, Support, User)
+- **User Creation Wizard**: Streamlined user creation with automatic password generation
+- **Enhanced Authentication**: Improved auth system supporting both Google SSO and internal users
+- **Admin Security**: Secure admin-only endpoints with proper middleware protection
+
+### 🎨 UI/UX Enhancements
+- **Tabbed Settings Page**: Organized settings with User Management and Account Tiers tabs
+- **Enhanced Email Page**: Improved email interface with sync and debug capabilities
+- **Role-Based Indicators**: Visual role indicators with colors and icons throughout the UI
+- **Improved Notifications**: Better error handling and success notifications
+- **Modern UI Components**: Enhanced forms, dialogs, and interactive elements
+
+### 🔐 Security Improvements
+- **Enhanced Authentication Flow**: Improved token management and session handling
+- **Role-Based Middleware**: Secure API endpoints with proper authorization
+- **Password Security**: Enhanced password hashing with bcrypt
+- **Google OAuth Integration**: Secure OAuth flow with proper scope management
+- **Admin Protection**: Self-deletion prevention and secure admin operations
+
+### 🐛 Bug Fixes
+- **Email Linking Logic**: Fixed bidirectional email conversation linking
+- **Authentication Context**: Resolved authentication state management issues
+- **Protected Routes**: Fixed routing problems with authentication guards
+- **Database Schema**: Updated user roles enum with proper migration
+- **DOM Nesting Warnings**: Fixed React DOM nesting warnings in email components
+- **OAuth URL Construction**: Fixed double `/api` in Google OAuth URLs
+
+### 🔄 Technical Improvements
+- **Database Migrations**: Automatic schema updates for new user roles
+- **Enhanced Email Service**: Improved email processing and contact matching
+- **Debug Endpoints**: Added debug functionality for troubleshooting email sync
+- **API Enhancements**: Extended API with user management endpoints
+- **Type Safety**: Updated TypeScript types for new user properties
+
+### 📝 Documentation
+- **Release Notes**: Comprehensive version history and feature documentation
+- **API Documentation**: Updated endpoint documentation for new features
+
+## [2.2.0] - 2024-12-15
 
 ### Added
-- Fully functional drag-and-drop Kanban board for task management
-- Calendar view for task visualization and management
-- Task detail page with comprehensive task information
-- Enhanced task editing capabilities across all views
-- Proper drop zones for Kanban columns and task cards
-- Visual feedback for drag-and-drop operations
-
-### Enhanced
-- Task tracking between list view and Kanban board - changes now sync immediately
-- Task editing functionality - works in both list and Kanban views
-- User experience with better drag-and-drop interactions
-- Console output - reduced warnings and debug messages
-- Error handling for task updates and status changes
-- Task status management with proper validation
+- Fully functional drag-and-drop Kanban board
+- Enhanced task editing capabilities in all views
+- Calendar view for task management
+- Enhanced task detail management
 
 ### Fixed
-- Task tracking issues between different views
-- Backend 500 errors when updating tasks with empty UUID fields
-- Edit button functionality in Kanban board task cards
-- Drag-and-drop confusion between task IDs and status values
-- React key prop warnings in UserAutocomplete component
-- Console warnings and debug output cleanup
-- UUID validation errors when saving tasks
+- Task tracking between list and Kanban views
+- Backend UUID validation issues
+- Console warnings and improved error handling
 
-### Technical
-- Improved TypeScript typing for task status values
-- Better separation of draggable and clickable areas in task cards
-- Enhanced error handling for task operations
-- Optimized component re-rendering and state management
-- Cleaned up development console output
-
-## [2.1.0] - 2024-12-19
+## [2.1.0] - 2024-11-30
 
 ### Added
 - Ollama LLM integration for document processing
-- Document upload component with drag-and-drop functionality
-- Enhanced document extraction with rule-based parsing
-- Integration of document processing into account onboarding
-- Support for parsing handover documents with structured data extraction
-- Docker Compose configuration for Ollama container
-- Comprehensive version control with trunk-based development
-
-### Enhanced
-- Document processing capabilities with improved extraction logic
-- Account onboarding workflow with document upload integration
-- Backend stability and error handling
-- Task management system with comprehensive features
-- API error handling and validation
+- Enhanced document upload and extraction capabilities
+- Improved account onboarding with document parsing
+- Enhanced task management with comprehensive features
 
 ### Fixed
-- Backend port conflicts (EADDRINUSE errors)
-- DOM nesting warnings in React components
-- Task creation 500 errors due to missing progress field
-- Frontend-backend communication issues
-- Docker container startup and networking issues
+- Backend port conflicts and stability issues
 
-### Technical
-- Updated dependencies and resolved compatibility issues
-- Improved error handling and logging
-- Enhanced API response formatting
-- Better separation of concerns in document processing
-
-## [2.0.0] - 2024-12-19
+## [2.0.0] - 2024-11-01
 
 ### Added
 - Complete CRM system with React/TypeScript frontend
 - Node.js/PostgreSQL backend with TypeORM
-- User authentication and authorization system
+- User authentication and authorization
 - Account and contact management
 - Task management with categories, priorities, and dependencies
 - Dashboard with analytics and charts
 - Docker containerization
-- Comprehensive seeding scripts
-- Health monitoring and scoring system
 
-### Features
-- Multi-user support with role-based access
-- Real-time data updates
-- Advanced filtering and sorting capabilities
-- Responsive Material-UI interface
-- RESTful API with proper error handling
-- Database migrations and seeding
-- Development and production configurations 
+---
+
+**Full Changelog**: [2.2.0...2.3.0](https://github.com/your-org/crm-project/compare/v2.2.0...v2.3.0) 

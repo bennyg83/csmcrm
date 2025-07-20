@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import { AppDataSource } from "../config/data-source";
 import { User } from "../entities/User";
 import { AuthRequest } from "../middleware/auth";
+import { Not } from "typeorm";
+import bcrypt from "bcryptjs";
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -19,9 +21,16 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const isValidPassword = await user.validatePassword(password);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: "Invalid credentials" });
+    // For regular users, validate password
+    if (!user.isGoogleUser) {
+      if (!password) {
+        return res.status(400).json({ error: "Password is required" });
+      }
+
+      const isValidPassword = await user.comparePassword(password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
     }
 
     const token = jwt.sign(
@@ -76,17 +85,168 @@ export const getMe = async (req: AuthRequest, res: Response) => {
   }
 };
 
+/**
+ * Get all users (Admin only)
+ */
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const userRepository = AppDataSource.getRepository(User);
+    
+    // Get all users excluding sensitive data
     const users = await userRepository.find({
-      select: ['id', 'name', 'email', 'role'],
-      order: { name: "ASC" }
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isGoogleUser: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true
+      },
+      order: { createdAt: 'DESC' }
     });
 
     res.json(users);
   } catch (error) {
-    console.error("Get all users error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Failed to get users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+};
+
+/**
+ * Create a new internal user (Admin only)
+ */
+export const createUser = async (req: Request, res: Response) => {
+  try {
+    const { name, email, role, password } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !role) {
+      return res.status(400).json({ error: 'Name, email, and role are required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Validate role
+    const validRoles = ['admin', 'user', 'manager', 'sales', 'support'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ error: 'Invalid role. Must be one of: ' + validRoles.join(', ') });
+    }
+
+    const userRepository = AppDataSource.getRepository(User);
+
+    // Check if user already exists
+    const existingUser = await userRepository.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
+    // Create new user
+    const user = new User();
+    user.name = name;
+    user.email = email;
+    user.role = role as any;
+    user.isGoogleUser = false;
+
+    // Set password (hash it if provided, otherwise generate temporary password)
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
+    } else {
+      // Generate temporary password
+      const tempPassword = Math.random().toString(36).slice(-8);
+      user.password = await bcrypt.hash(tempPassword, 10);
+      console.log(`Temporary password for ${email}: ${tempPassword}`);
+    }
+
+    const savedUser = await userRepository.save(user);
+
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = savedUser;
+    res.status(201).json(userWithoutPassword);
+  } catch (error) {
+    console.error('Failed to create user:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+};
+
+/**
+ * Update a user (Admin only)
+ */
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const { name, email, role, password } = req.body;
+
+    const userRepository = AppDataSource.getRepository(User);
+
+    const user = await userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update fields if provided
+    if (name) user.name = name;
+    if (email) {
+      // Check if new email is already taken by another user
+      const existingUser = await userRepository.findOne({ 
+        where: { email, id: Not(userId) } 
+      });
+      if (existingUser) {
+        return res.status(400).json({ error: 'Email already taken by another user' });
+      }
+      user.email = email;
+    }
+    if (role) {
+      const validRoles = ['admin', 'user', 'manager', 'sales', 'support'];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ error: 'Invalid role. Must be one of: ' + validRoles.join(', ') });
+      }
+      user.role = role as any;
+    }
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
+    }
+
+    const updatedUser = await userRepository.save(user);
+
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    res.json(userWithoutPassword);
+  } catch (error) {
+    console.error('Failed to update user:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+};
+
+/**
+ * Delete a user (Admin only)
+ */
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const currentUser = req.user as User;
+
+    // Prevent self-deletion
+    if (currentUser.id === userId) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+
+    const userRepository = AppDataSource.getRepository(User);
+
+    const user = await userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    await userRepository.remove(user);
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Failed to delete user:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
   }
 }; 

@@ -42,4 +42,11 @@ export const adminAuth = async (req: AuthRequest, res: Response, next: NextFunct
   } catch (error) {
     res.status(401).json({ error: "Authentication failed." });
   }
+};
+
+export const adminOnly = (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ error: "Access denied. Admin role required." });
+  }
+  next();
 }; 

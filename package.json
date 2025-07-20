@@ -1,7 +1,7 @@
 {
   "name": "crm-project",
-  "version": "2.1.0",
-  "description": "Full-stack CRM application",
+  "version": "2.3.0",
+  "description": "Full-stack CRM application with Gmail integration and user management",
   "scripts": {
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",

@@ -18,18 +18,50 @@ import {
   DialogActions,
   TextField,
   IconButton,
-  Tooltip
+  Tooltip,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  People as PeopleIcon,
+  Category as CategoryIcon
 } from '@mui/icons-material';
 import { apiService } from '../services/api';
 import { AccountTier } from '../types';
+import UserManagement from '../components/UserManagement';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`settings-tabpanel-${index}`}
+      aria-labelledby={`settings-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ py: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
 
 const SettingsPage: React.FC = () => {
+  const [currentTab, setCurrentTab] = useState(0);
   const [tiers, setTiers] = useState<AccountTier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +71,14 @@ const SettingsPage: React.FC = () => {
   const [editForm, setEditForm] = useState<Partial<AccountTier>>({});
 
   useEffect(() => {
-    fetchTiers();
-  }, []);
+    if (currentTab === 1) { // Account Tiers tab
+      fetchTiers();
+    }
+  }, [currentTab]);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+  };
 
   const fetchTiers = async () => {
     try {
@@ -131,16 +169,40 @@ const SettingsPage: React.FC = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h3" gutterBottom sx={{ fontWeight: 700 }}>
+            <SettingsIcon sx={{ mr: 1, verticalAlign: 'bottom' }} />
             Settings
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Manage system configuration and account tiers
+            Manage users, account tiers, and system configuration
           </Typography>
         </Box>
       </Box>
 
-      {/* Account Tiers Section */}
-      <Box sx={{ mb: 6 }}>
+      {/* Settings Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={currentTab} onChange={handleTabChange}>
+          <Tab 
+            icon={<PeopleIcon />} 
+            label="User Management" 
+            id="settings-tab-0"
+            aria-controls="settings-tabpanel-0"
+          />
+          <Tab 
+            icon={<CategoryIcon />} 
+            label="Account Tiers" 
+            id="settings-tab-1"
+            aria-controls="settings-tabpanel-1"
+          />
+        </Tabs>
+      </Box>
+
+      {/* User Management Tab */}
+      <TabPanel value={currentTab} index={0}>
+        <UserManagement />
+      </TabPanel>
+
+      {/* Account Tiers Tab */}
+      <TabPanel value={currentTab} index={1}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h5" sx={{ fontWeight: 600 }}>
             Account Tiers
@@ -204,7 +266,7 @@ const SettingsPage: React.FC = () => {
             </Table>
           </TableContainer>
         </Paper>
-      </Box>
+      </TabPanel>
 
       {/* Edit/Create Tier Modal */}
       <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>

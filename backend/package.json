@@ -1,7 +1,7 @@
 {
   "name": "crm-backend",
-  "version": "2.1.0",
-  "description": "CRM Backend API",
+  "version": "2.3.0",
+  "description": "CRM Backend API with Gmail integration and user management",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

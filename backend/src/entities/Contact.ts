@@ -59,4 +59,7 @@ export class Contact {
 
   @OneToMany("Note", "contact")
   notes!: any[];
+
+  @OneToMany("Email", "contact")
+  emails!: any[];
 } 

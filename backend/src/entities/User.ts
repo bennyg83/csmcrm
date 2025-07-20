@@ -7,7 +7,7 @@ import {
   BeforeInsert,
   BeforeUpdate
 } from "typeorm";
-import { IsEmail, MinLength } from "class-validator";
+import { IsEmail, MinLength, IsOptional } from "class-validator";
 import * as bcrypt from "bcryptjs";
 
 @Entity("users")
@@ -23,16 +23,41 @@ export class User {
   @MinLength(2)
   name!: string;
 
-  @Column()
+  @Column({ nullable: true })
   @MinLength(6)
-  password!: string;
+  @IsOptional()
+  password?: string;
 
   @Column({
     type: "enum",
-    enum: ["admin", "user"],
+    enum: ["admin", "user", "manager", "sales", "support"],
     default: "user"
   })
-  role!: "admin" | "user";
+  role!: "admin" | "user" | "manager" | "sales" | "support";
+
+  // Google SSO fields
+  @Column({ nullable: true, unique: true })
+  @IsOptional()
+  googleId?: string;
+
+  @Column({ nullable: true })
+  @IsOptional()
+  googleAccessToken?: string;
+
+  @Column({ nullable: true })
+  @IsOptional()
+  googleRefreshToken?: string;
+
+  @Column({ nullable: true })
+  @IsOptional()
+  googleTokenExpiry?: Date;
+
+  @Column({ nullable: true })
+  @IsOptional()
+  avatar?: string;
+
+  @Column({ default: false })
+  isGoogleUser!: boolean;
 
   @CreateDateColumn()
   createdAt!: Date;
@@ -43,12 +68,31 @@ export class User {
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {
-    if (this.password) {
+    // Only hash password if it exists and user is not a Google user
+    if (this.password && !this.isGoogleUser) {
       this.password = await bcrypt.hash(this.password, 10);
     }
   }
 
-  async validatePassword(password: string): Promise<boolean> {
+  async comparePassword(password: string): Promise<boolean> {
+    if (!this.password) return false;
     return bcrypt.compare(password, this.password);
+  }
+
+  // Helper method to update Google tokens
+  updateGoogleTokens(accessToken: string, refreshToken?: string, expiryDate?: Date) {
+    this.googleAccessToken = accessToken;
+    if (refreshToken) {
+      this.googleRefreshToken = refreshToken;
+    }
+    if (expiryDate) {
+      this.googleTokenExpiry = expiryDate;
+    }
+  }
+
+  // Check if Google token is expired
+  isGoogleTokenExpired(): boolean {
+    if (!this.googleTokenExpiry) return true;
+    return new Date() >= this.googleTokenExpiry;
   }
 } 

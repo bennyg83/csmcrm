@@ -3,7 +3,9 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'manager' | 'sales' | 'support';
+  isGoogleUser: boolean;
+  avatar?: string;
   createdAt: string;
   updatedAt: string;
 }

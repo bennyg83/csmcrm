@@ -60,6 +60,7 @@ class ApiService {
         name: 'Test Admin',
         email: 'admin@crm.com',
         role: 'admin',
+        isGoogleUser: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -78,6 +79,7 @@ class ApiService {
       name: 'Test Admin',
       email: 'admin@crm.com',
       role: 'admin',
+      isGoogleUser: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -86,6 +88,26 @@ class ApiService {
   async getAllUsers(): Promise<User[]> {
     // Use public endpoint for development/testing
     const response: AxiosResponse<User[]> = await this.api.get('/auth/users/public');
+    return response.data;
+  }
+
+  // User Management (Admin only)
+  async createUser(userData: { name: string; email: string; role: string; password?: string }): Promise<User> {
+    const response: AxiosResponse<User> = await this.api.post('/auth/users', userData);
+    return response.data;
+  }
+
+  async updateUser(userId: string, userData: Partial<{ name: string; email: string; role: string; password: string }>): Promise<User> {
+    const response: AxiosResponse<User> = await this.api.put(`/auth/users/${userId}`, userData);
+    return response.data;
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    await this.api.delete(`/auth/users/${userId}`);
+  }
+
+  async getUsers(): Promise<User[]> {
+    const response: AxiosResponse<User[]> = await this.api.get('/auth/users');
     return response.data;
   }
 
@@ -316,6 +338,103 @@ class ApiService {
 
   async getLLMStatus(): Promise<any> {
     const response: AxiosResponse<any> = await this.api.get('/documents/llm-status');
+    return response.data;
+  }
+
+  // Gmail Integration
+  async getRecentEmails(limit: number = 20, query?: string): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    if (query) {
+      params.append('q', query);
+    }
+    const response: AxiosResponse<any> = await this.api.get(`/gmail/emails?${params.toString()}`);
+    return response.data;
+  }
+
+  async getEmailById(emailId: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get(`/gmail/emails/${emailId}`);
+    return response.data;
+  }
+
+  async sendEmail(emailData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/gmail/emails/send', emailData);
+    return response.data;
+  }
+
+  async replyToEmail(emailId: string, body: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post(`/gmail/emails/${emailId}/reply`, { body });
+    return response.data;
+  }
+
+  async searchEmails(query: string, limit: number = 10): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('query', query);
+    params.append('limit', limit.toString());
+    const response: AxiosResponse<any> = await this.api.get(`/gmail/search?${params.toString()}`);
+    return response.data;
+  }
+
+  async discoverContacts(maxEmails: number = 50): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('maxEmails', maxEmails.toString());
+    const response: AxiosResponse<any> = await this.api.get(`/gmail/contacts/discover?${params.toString()}`);
+    return response.data;
+  }
+
+  async getGmailLabels(): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get('/gmail/labels');
+    return response.data;
+  }
+
+  // Email-Contact Integration
+  async syncEmailsWithContacts(maxEmails: number = 20): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('maxEmails', maxEmails.toString());
+    const response: AxiosResponse<any> = await this.api.post(`/gmail/sync?${params.toString()}`);
+    return response.data;
+  }
+
+  async debugEmailSync(maxEmails: number = 10): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('maxEmails', maxEmails.toString());
+    const response: AxiosResponse<any> = await this.api.post(`/gmail/debug-sync?${params.toString()}`);
+    return response.data;
+  }
+
+  async debugContactInfo(contactId: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get(`/gmail/debug/contacts/${contactId}`);
+    return response.data;
+  }
+
+  async getContactEmails(contactId: string, limit: number = 20): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    const response: AxiosResponse<any> = await this.api.get(`/gmail/contacts/${contactId}/emails?${params.toString()}`);
+    return response.data;
+  }
+
+  async getAccountEmails(accountId: string, limit: number = 50): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    const response: AxiosResponse<any> = await this.api.get(`/gmail/accounts/${accountId}/emails?${params.toString()}`);
+    return response.data;
+  }
+
+  async getAccountEmailSummary(accountId: string, days: number = 30): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('days', days.toString());
+    const response: AxiosResponse<any> = await this.api.get(`/gmail/accounts/${accountId}/email-summary?${params.toString()}`);
+    return response.data;
+  }
+
+  async sendEmailToContact(contactId: string, emailData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post(`/gmail/contacts/${contactId}/send`, emailData);
+    return response.data;
+  }
+
+  async markEmailAsRead(emailId: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.patch(`/gmail/emails/${emailId}/read`);
     return response.data;
   }
 }

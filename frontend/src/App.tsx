@@ -9,9 +9,34 @@ import AccountDetailPage from './pages/AccountDetailPage';
 import TasksPage from './pages/TasksPage';
 import TaskDetailPage from './pages/TaskDetailPage';
 import CalendarPage from './pages/CalendarPage';
+import EmailPage from './pages/EmailPage';
 import SettingsPage from './pages/SettingsPage';
+import LoginPage from './pages/LoginPage';
 import Layout from './components/Layout';
 import ContactDetailPage from './pages/ContactDetailPage';
+import { GoogleAuthSuccess, GoogleAuthError } from './pages/GoogleAuthCallback';
+
+// Protected Route Component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  console.log('ProtectedRoute - isAuthenticated:', isAuthenticated, 'loading:', loading);
+  
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        Loading...
+      </div>
+    );
+  }
+  
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+};
 
 const theme = createTheme({
   palette: {
@@ -161,68 +186,108 @@ const App: React.FC = () => {
             <Route
               path="/"
               element={
-                <Layout>
-                  <DashboardPage />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <DashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <DashboardPage />
+                  </Layout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/accounts"
               element={
-                <Layout>
-                  <AccountsPage />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <AccountsPage />
+                  </Layout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/accounts/:id"
               element={
-                <Layout>
-                  <AccountDetailPage />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <AccountDetailPage />
+                  </Layout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/tasks"
               element={
-                <Layout>
-                  <TasksPage />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <TasksPage />
+                  </Layout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/tasks/:id"
               element={
-                <Layout>
-                  <TaskDetailPage />
-                </Layout>
-              }
-            />
-            <Route
-              path="/calendar"
-              element={
-                <Layout>
-                  <CalendarPage />
-                </Layout>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <Layout>
-                  <SettingsPage />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <TaskDetailPage />
+                  </Layout>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/contacts/:id"
               element={
-                <Layout>
-                  <ContactDetailPage />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <ContactDetailPage />
+                  </Layout>
+                </ProtectedRoute>
               }
             />
-            <Route path="*" element={<Navigate to="/" />} />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CalendarPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/email"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <EmailPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <SettingsPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Auth routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
+            <Route path="/auth/google/error" element={<GoogleAuthError />} />
           </Routes>
         </Router>
       </AuthProvider>
