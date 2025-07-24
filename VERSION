@@ -1,6 +1,20 @@
-2.3.0
+2.3.1
 
 # CRM System Version History
+# v2.3.1 - Dependency Fixes & Configuration Backup
+# - 🔧 FIXED: Added missing googleapis dependency to package.json
+#   * Resolved "Cannot find module 'googleapis'" error
+#   * Ensured Gmail integration works out-of-the-box
+#   * Added proper dependency versioning (^128.0.0)
+# - 📁 ADDED: Environment configuration backup
+#   * Created backend/.env with Google OAuth credentials
+#   * Added database configuration for Docker setup
+#   * Included JWT secret and development settings
+# - 🐛 BUG FIXES
+#   * Fixed container startup issues due to missing dependencies
+#   * Resolved import chain failures in Google OAuth services
+#   * Improved Docker build reliability
+
 # v2.3.0 - Gmail Integration & User Management System
 # - 🔧 MAJOR: Gmail Integration with OAuth2 authentication
 #   * Full Gmail API integration for reading, sending, and managing emails

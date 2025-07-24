@@ -1,6 +1,6 @@
 {
   "name": "crm-frontend",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "CRM Frontend with Gmail integration and user management UI",
   "private": true,
   "type": "module",
