@@ -21,15 +21,28 @@ export const getRecentEmails = async (req: Request, res: Response) => {
 
     const maxResults = parseInt(req.query.limit as string) || 20;
     const query = req.query.q as string;
+    const preview = req.query.preview === 'true';
 
-    const emails = await gmailService.getRecentEmails(
-      user.googleAccessToken,
-      user.googleRefreshToken || '',
-      maxResults,
-      query
-    );
+    let emails;
+    if (preview) {
+      // Use lightweight preview for faster loading
+      emails = await gmailService.getEmailPreviews(
+        user.googleAccessToken,
+        user.googleRefreshToken || '',
+        maxResults,
+        query
+      );
+    } else {
+      // Use full email content
+      emails = await gmailService.getRecentEmails(
+        user.googleAccessToken,
+        user.googleRefreshToken || '',
+        maxResults,
+        query
+      );
+    }
 
-    res.json({ emails, count: emails.length });
+    res.json({ emails, count: emails.length, preview });
   } catch (error) {
     console.error("Failed to get recent emails:", error);
     res.status(500).json({ error: "Failed to fetch emails" });

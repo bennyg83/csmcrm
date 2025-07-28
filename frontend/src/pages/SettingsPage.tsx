@@ -73,6 +73,9 @@ const SettingsPage: React.FC = () => {
   useEffect(() => {
     if (currentTab === 1) { // Account Tiers tab
       fetchTiers();
+    } else {
+      // For User Management tab (currentTab === 0), set loading to false
+      setLoading(false);
     }
   }, [currentTab]);
 

@@ -107,7 +107,7 @@ class ApiService {
   }
 
   async getUsers(): Promise<User[]> {
-    const response: AxiosResponse<User[]> = await this.api.get('/auth/users');
+    const response: AxiosResponse<User[]> = await this.api.get('/auth/users/public');
     return response.data;
   }
 
@@ -177,7 +177,7 @@ class ApiService {
     return response.data;
   }
 
-  async createTask(task: Partial<Task>): Promise<Task> {
+  async createTask(task: Partial<Task> & { createCalendarEvent?: boolean }): Promise<Task> {
     const response: AxiosResponse<Task> = await this.api.post('/tasks', task);
     return response.data;
   }
@@ -342,11 +342,14 @@ class ApiService {
   }
 
   // Gmail Integration
-  async getRecentEmails(limit: number = 20, query?: string): Promise<any> {
+  async getRecentEmails(limit: number = 20, query?: string, preview: boolean = false): Promise<any> {
     const params = new URLSearchParams();
     params.append('limit', limit.toString());
     if (query) {
       params.append('q', query);
+    }
+    if (preview) {
+      params.append('preview', 'true');
     }
     const response: AxiosResponse<any> = await this.api.get(`/gmail/emails?${params.toString()}`);
     return response.data;
@@ -435,6 +438,42 @@ class ApiService {
 
   async markEmailAsRead(emailId: string): Promise<any> {
     const response: AxiosResponse<any> = await this.api.patch(`/gmail/emails/${emailId}/read`);
+    return response.data;
+  }
+
+  // Calendar Integration
+  async checkCalendarConnection(): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get('/calendar/status');
+    return response.data;
+  }
+
+  async getCalendarEvents(timeMin?: string, timeMax?: string, maxResults?: number): Promise<any> {
+    const params = new URLSearchParams();
+    if (timeMin) params.append('timeMin', timeMin);
+    if (timeMax) params.append('timeMax', timeMax);
+    if (maxResults) params.append('maxResults', maxResults.toString());
+    
+    const response: AxiosResponse<any> = await this.api.get(`/calendar/events?${params.toString()}`);
+    return response.data;
+  }
+
+  async createCalendarEvent(eventData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/calendar/events', eventData);
+    return response.data;
+  }
+
+  async updateCalendarEvent(eventId: string, eventData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.put(`/calendar/events/${eventId}`, eventData);
+    return response.data;
+  }
+
+  async deleteCalendarEvent(eventId: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.delete(`/calendar/events/${eventId}`);
+    return response.data;
+  }
+
+  async getCalendarList(): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get('/calendar/calendars');
     return response.data;
   }
 }

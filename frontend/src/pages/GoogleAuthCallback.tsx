@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import apiService from '../services/api';
+import { apiService } from '../services/api';
 
 const GoogleAuthSuccess: React.FC = () => {
   const location = useLocation();

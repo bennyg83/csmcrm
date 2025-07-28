@@ -45,11 +45,13 @@ export class Task {
   @IsOptional()
   assignedToClient?: string[];
 
-  @Column()
-  accountId!: string;
+  @Column({ nullable: true })
+  @IsOptional()
+  accountId?: string;
 
-  @Column()
-  accountName!: string;
+  @Column({ nullable: true })
+  @IsOptional()
+  accountName?: string;
 
   @Column({ type: "json", default: [] })
   subTasks!: any[];
@@ -67,6 +69,10 @@ export class Task {
   @Column({ nullable: true })
   @IsOptional()
   categoryId?: string;
+
+  @Column({ nullable: true })
+  @IsOptional()
+  googleCalendarEventId?: string;
 
   @Column({ type: "int" })
   @Min(0)

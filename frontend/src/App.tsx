@@ -11,6 +11,7 @@ import TaskDetailPage from './pages/TaskDetailPage';
 import CalendarPage from './pages/CalendarPage';
 import EmailPage from './pages/EmailPage';
 import SettingsPage from './pages/SettingsPage';
+import IntegrationsPage from './pages/IntegrationsPage';
 import LoginPage from './pages/LoginPage';
 import Layout from './components/Layout';
 import ContactDetailPage from './pages/ContactDetailPage';
@@ -279,6 +280,16 @@ const App: React.FC = () => {
                 <ProtectedRoute>
                   <Layout>
                     <SettingsPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/integrations"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <IntegrationsPage />
                   </Layout>
                 </ProtectedRoute>
               }

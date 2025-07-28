@@ -156,7 +156,8 @@ const TasksPage: React.FC = () => {
     accountId: '',
     categoryId: '',
     tags: [] as string[],
-    progress: 0
+    progress: 0,
+    createCalendarEvent: false
   });
 
   useEffect(() => {
@@ -363,14 +364,31 @@ const TasksPage: React.FC = () => {
         priority: task.priority as any,
         dueDate: new Date(task.dueDate),
         assignedTo: Array.isArray(task.assignedTo) ? task.assignedTo : [task.assignedTo],
-        assignedToClient: Array.isArray(task.assignedToClient) ? task.assignedToClient : [task.assignedToClient],
-        accountId: task.accountId || '',
+        assignedToClient: Array.isArray(task.assignedToClient) ? task.assignedToClient.filter(Boolean) : [],
+        accountId: task.accountId,
         categoryId: task.categoryId || '',
         tags: task.tags || [],
-        progress: task.progress || 0
+        progress: task.progress,
+        createCalendarEvent: false
       });
-      setTaskDialogOpen(true);
+    } else {
+      setEditingTask(null);
+      setTaskForm({
+        title: '',
+        description: '',
+        status: 'To Do',
+        priority: 'Medium',
+        dueDate: new Date(),
+        assignedTo: [],
+        assignedToClient: [],
+        accountId: '',
+        categoryId: '',
+        tags: [],
+        progress: 0,
+        createCalendarEvent: false
+      });
     }
+    setTaskDialogOpen(true);
   };
 
   const handleSort = (key: keyof Task) => {
@@ -411,11 +429,12 @@ const TasksPage: React.FC = () => {
         priority: task.priority,
         dueDate: new Date(task.dueDate),
         assignedTo: Array.isArray(task.assignedTo) ? task.assignedTo : [task.assignedTo],
-        assignedToClient: Array.isArray(task.assignedToClient) ? task.assignedToClient : [],
+        assignedToClient: Array.isArray(task.assignedToClient) ? task.assignedToClient.filter(Boolean) : [],
         accountId: task.accountId,
         categoryId: task.categoryId || '',
         tags: task.tags || [],
-        progress: task.progress
+        progress: task.progress,
+        createCalendarEvent: false
       });
     } else {
       setEditingTask(null);
@@ -430,7 +449,8 @@ const TasksPage: React.FC = () => {
         accountId: '',
         categoryId: '',
         tags: [],
-        progress: 0
+        progress: 0,
+        createCalendarEvent: false
       });
     }
     setTaskDialogOpen(true);
@@ -441,9 +461,11 @@ const TasksPage: React.FC = () => {
       const taskData = {
         ...taskForm,
         dueDate: taskForm.dueDate.toISOString(),
-        // Convert empty strings to null for UUID fields
-        accountId: taskForm.accountId || null,
-        categoryId: taskForm.categoryId || null,
+        // Convert empty strings to undefined for UUID fields
+        accountId: taskForm.accountId || undefined,
+        categoryId: taskForm.categoryId || undefined,
+        // Include calendar integration option
+        createCalendarEvent: taskForm.createCalendarEvent
       };
 
       if (editingTask) {
@@ -1421,6 +1443,20 @@ const TasksPage: React.FC = () => {
                 />
                 <Typography variant="body2" color="text.secondary">
                   {taskForm.progress}%
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={taskForm.createCalendarEvent}
+                      onChange={(e) => setTaskForm(prev => ({ ...prev, createCalendarEvent: e.target.checked }))}
+                    />
+                  }
+                  label="Create Google Calendar Event"
+                />
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Automatically create a calendar event for this task when saved
                 </Typography>
               </Grid>
             </Grid>

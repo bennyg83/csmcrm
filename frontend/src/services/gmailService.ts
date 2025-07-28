@@ -54,9 +54,9 @@ export class GmailService {
   /**
    * Get recent emails
    */
-  async getRecentEmails(limit: number = 20, query?: string): Promise<EmailMessage[]> {
+  async getRecentEmails(limit: number = 20, query?: string, preview: boolean = false): Promise<EmailMessage[]> {
     try {
-      const response = await apiService.getRecentEmails(limit, query);
+      const response = await apiService.getRecentEmails(limit, query, preview);
       return response.emails.map((email: any) => ({
         ...email,
         date: new Date(email.date)

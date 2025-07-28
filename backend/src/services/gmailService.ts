@@ -75,7 +75,7 @@ export class GmailService {
   }
 
   /**
-   * Get recent emails from Gmail
+   * Get recent emails from Gmail with optimized batch processing
    */
   async getRecentEmails(
     userAccessToken: string,
@@ -86,7 +86,7 @@ export class GmailService {
     try {
       const gmail = this.googleOAuthService.getGmailClient(userAccessToken, userRefreshToken);
       
-      // Get list of messages
+      // Get list of messages with metadata to avoid full message fetch
       const response = await gmail.users.messages.list({
         userId: 'me',
         maxResults,
@@ -97,17 +97,28 @@ export class GmailService {
         return [];
       }
 
-      // Get full message details
+      // Use batch request to get multiple emails at once
+      const messageIds = response.data.messages.slice(0, maxResults).map(msg => msg.id!);
       const emails: EmailMessage[] = [];
-      for (const message of response.data.messages.slice(0, maxResults)) {
-        try {
-          const emailData = await this.getEmailById(userAccessToken, userRefreshToken, message.id!);
-          if (emailData) {
-            emails.push(emailData);
+
+      // Process in batches of 10 to avoid rate limits
+      const batchSize = 10;
+      for (let i = 0; i < messageIds.length; i += batchSize) {
+        const batch = messageIds.slice(i, i + batchSize);
+        
+        // Create batch request for multiple emails
+        const batchPromises = batch.map(async (messageId) => {
+          try {
+            const emailData = await this.getEmailById(userAccessToken, userRefreshToken, messageId);
+            return emailData;
+          } catch (error) {
+            console.error(`Failed to fetch email ${messageId}:`, error);
+            return null;
           }
-        } catch (error) {
-          console.error(`Failed to fetch email ${message.id}:`, error);
-        }
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        emails.push(...batchResults.filter(email => email !== null) as EmailMessage[]);
       }
 
       return emails;
@@ -138,6 +149,52 @@ export class GmailService {
     } catch (error) {
       console.error(`Failed to get email ${messageId}:`, error);
       return null;
+    }
+  }
+
+  /**
+   * Get email previews (lightweight version for faster loading)
+   */
+  async getEmailPreviews(
+    userAccessToken: string,
+    userRefreshToken: string,
+    maxResults: number = 20,
+    query?: string
+  ): Promise<EmailMessage[]> {
+    try {
+      const gmail = this.googleOAuthService.getGmailClient(userAccessToken, userRefreshToken);
+      
+      const response = await gmail.users.messages.list({
+        userId: 'me',
+        maxResults,
+        q: query || 'in:inbox OR in:sent'
+      });
+
+      if (!response.data.messages) {
+        return [];
+      }
+
+      // Get full message details for proper headers and content
+      const previewPromises = response.data.messages.slice(0, maxResults).map(async (message) => {
+        try {
+          const response = await gmail.users.messages.get({
+            userId: 'me',
+            id: message.id!,
+            format: 'full' // Get full content with headers
+          });
+
+          return this.parseGmailMessagePreview(response.data);
+        } catch (error) {
+          console.error(`Failed to fetch email preview ${message.id}:`, error);
+          return null;
+        }
+      });
+
+      const previews = await Promise.all(previewPromises);
+      return previews.filter(email => email !== null) as EmailMessage[];
+    } catch (error) {
+      console.error('Failed to get email previews:', error);
+      throw new Error('Failed to fetch email previews');
     }
   }
 
@@ -230,6 +287,58 @@ export class GmailService {
   }
 
   /**
+   * Parse Gmail message preview (full content version)
+   */
+  private parseGmailMessagePreview(gmailMessage: gmail_v1.Schema$Message): EmailMessage | null {
+    try {
+      const headers = gmailMessage.payload?.headers || [];
+      const getHeader = (name: string) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || '';
+
+      const subject = getHeader('Subject');
+      const fromHeader = getHeader('From');
+      const toHeader = getHeader('To');
+      const ccHeader = getHeader('Cc');
+      const dateHeader = getHeader('Date');
+
+      // Parse email addresses
+      const from = this.parseEmailAddress(fromHeader);
+      const to = this.parseEmailAddresses(toHeader);
+      const cc = this.parseEmailAddresses(ccHeader);
+
+      // Extract full email body
+      const { body, bodyHtml } = this.extractEmailBody(gmailMessage.payload);
+      
+      // Use full body or snippet as fallback
+      const emailContent = body || gmailMessage.snippet || 'No content available';
+
+      // Decode HTML entities in all text fields
+      const decodedSubject = this.decodeHtmlEntities(subject);
+      const decodedEmailContent = this.decodeHtmlEntities(emailContent);
+      const decodedSnippet = this.decodeHtmlEntities(gmailMessage.snippet || '');
+
+      const email: EmailMessage = {
+        id: gmailMessage.id || undefined,
+        threadId: gmailMessage.threadId || undefined,
+        subject: decodedSubject,
+        from,
+        to,
+        cc: cc.length > 0 ? cc : undefined,
+        body: decodedEmailContent,
+        bodyHtml: bodyHtml ? this.decodeHtmlEntities(bodyHtml) : decodedEmailContent,
+        date: dateHeader ? new Date(dateHeader) : new Date(),
+        isRead: !gmailMessage.labelIds?.includes('UNREAD'),
+        labels: gmailMessage.labelIds || undefined,
+        snippet: decodedSnippet
+      };
+
+      return email;
+    } catch (error) {
+      console.error('Failed to parse Gmail message preview:', error);
+      return null;
+    }
+  }
+
+  /**
    * Parse Gmail message format to our EmailMessage format
    */
   private parseGmailMessage(gmailMessage: gmail_v1.Schema$Message): EmailMessage | null {
@@ -251,19 +360,25 @@ export class GmailService {
       // Get email body
       const { body, bodyHtml } = this.extractEmailBody(gmailMessage.payload);
 
+      // Decode HTML entities in all text fields
+      const decodedSubject = this.decodeHtmlEntities(subject);
+      const decodedBody = this.decodeHtmlEntities(body);
+      const decodedBodyHtml = bodyHtml ? this.decodeHtmlEntities(bodyHtml) : undefined;
+      const decodedSnippet = this.decodeHtmlEntities(gmailMessage.snippet || '');
+
       const email: EmailMessage = {
         id: gmailMessage.id || undefined,
         threadId: gmailMessage.threadId || undefined,
-        subject,
+        subject: decodedSubject,
         from,
         to,
         cc: cc.length > 0 ? cc : undefined,
-        body,
-        bodyHtml,
+        body: decodedBody,
+        bodyHtml: decodedBodyHtml,
         date: dateHeader ? new Date(dateHeader) : new Date(),
         isRead: !gmailMessage.labelIds?.includes('UNREAD'),
         labels: gmailMessage.labelIds || undefined,
-        snippet: gmailMessage.snippet || undefined
+        snippet: decodedSnippet
       };
 
       return email;
@@ -281,7 +396,8 @@ export class GmailService {
 
     // If it's a simple message with body
     if (payload.body?.data) {
-      const body = Buffer.from(payload.body.data, 'base64url').toString();
+      let body = Buffer.from(payload.body.data, 'base64url').toString();
+      body = this.decodeHtmlEntities(body);
       return { body, bodyHtml: payload.mimeType === 'text/html' ? body : undefined };
     }
 
@@ -293,8 +409,10 @@ export class GmailService {
       for (const part of payload.parts) {
         if (part.mimeType === 'text/plain' && part.body?.data) {
           textBody = Buffer.from(part.body.data, 'base64url').toString();
+          textBody = this.decodeHtmlEntities(textBody);
         } else if (part.mimeType === 'text/html' && part.body?.data) {
           htmlBody = Buffer.from(part.body.data, 'base64url').toString();
+          htmlBody = this.decodeHtmlEntities(htmlBody);
         }
       }
 
@@ -433,5 +551,44 @@ export class GmailService {
    */
   private stripHtml(html: string): string {
     return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  }
+
+  /**
+   * Decode HTML entities to readable text
+   */
+  private decodeHtmlEntities(text: string): string {
+    if (!text) return text;
+    
+    const entities: { [key: string]: string } = {
+      '&amp;': '&',
+      '&lt;': '<',
+      '&gt;': '>',
+      '&quot;': '"',
+      '&#39;': "'",
+      '&apos;': "'",
+      '&nbsp;': ' ',
+      '&copy;': '©',
+      '&reg;': '®',
+      '&trade;': '™',
+      '&hellip;': '...',
+      '&mdash;': '—',
+      '&ndash;': '–',
+      '&lsquo;': "'",
+      '&rsquo;': "'",
+      '&ldquo;': '"',
+      '&rdquo;': '"'
+    };
+
+    // First handle numeric entities like &#39;
+    let decoded = text.replace(/&#(\d+);/g, (match, code) => {
+      return String.fromCharCode(parseInt(code));
+    });
+
+    // Then handle named entities
+    decoded = decoded.replace(/&[a-zA-Z0-9]+;/g, (match) => {
+      return entities[match] || match;
+    });
+
+    return decoded;
   }
 } 

@@ -36,7 +36,7 @@ import {
   Support as SupportIcon,
   TrendingUp as SalesIcon
 } from '@mui/icons-material';
-import apiService from '../services/api';
+import { apiService } from '../services/api';
 import { User } from '../types';
 
 const UserManagement: React.FC = () => {
