@@ -31,6 +31,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { apiService } from '../services/api';
 import { Task, Account, User, Category } from '../types';
 import UserAutocomplete from '../components/UserAutocomplete';
+import { usePermissions } from '../utils/rbac';
 
 const locales = {
   'en-US': enUS,
@@ -67,6 +68,8 @@ const CalendarPage: React.FC = () => {
     tags: [] as string[],
     progress: 0
   });
+
+  const { canCreate } = usePermissions();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -198,36 +201,38 @@ const CalendarPage: React.FC = () => {
               View and manage your tasks in calendar format
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setTaskForm({
-                title: '',
-                description: '',
-                status: 'To Do',
-                priority: 'Medium',
-                dueDate: new Date(),
-                assignedTo: [],
-                assignedToClient: [],
-                accountId: '',
-                categoryId: '',
-                tags: [],
-                progress: 0
-              });
-              setEditingTask(null);
-              setTaskDialogOpen(true);
-            }}
-            sx={{ 
-              px: 3, 
-              py: 1.5,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600
-            }}
-          >
-            Add Task
-          </Button>
+                      {canCreate('tasks') && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setTaskForm({
+                  title: '',
+                  description: '',
+                  status: 'To Do',
+                  priority: 'Medium',
+                  dueDate: new Date(),
+                  assignedTo: [],
+                  assignedToClient: [],
+                  accountId: '',
+                  categoryId: '',
+                  tags: [],
+                  progress: 0
+                });
+                setEditingTask(null);
+                setTaskDialogOpen(true);
+              }}
+              sx={{ 
+                px: 3, 
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600
+              }}
+            >
+              Add Task
+            </Button>
+          )}
         </Box>
 
         {/* Calendar */}

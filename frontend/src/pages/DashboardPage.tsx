@@ -55,6 +55,7 @@ import CircleIcon from '@mui/icons-material/Circle';
 import { Task, User } from '../types';
 import SearchIcon from '@mui/icons-material/Search';
 import UserAutocomplete from '../components/UserAutocomplete';
+import { usePermissions } from '../utils/rbac';
 
 const CSM_OPTIONS = ['Amanda Lee', 'Robert Taylor', 'Jennifer Smith', 'Michael Chen'];
 const AM_OPTIONS = ['Michael Chen', 'David Wilson', 'Sarah Johnson'];
@@ -69,6 +70,9 @@ const DashboardPage: React.FC = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [search, setSearch] = useState('');
+  
+  // RBAC permissions
+  const { canCreate } = usePermissions();
   const [selectedCSMs, setSelectedCSMs] = useState<string[]>([]);
   const [selectedAM, setSelectedAM] = useState('');
   const [selectedSE, setSelectedSE] = useState('');
@@ -448,14 +452,16 @@ const DashboardPage: React.FC = () => {
               sx={{ fontSize: 18, color: 'text.secondary', transition: 'transform 0.2s, color 0.2s' }}
             />
           </Link>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/accounts')}
-            sx={{ px: 3, py: 1, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-          >
-            Add Account
-          </Button>
+          {canCreate('accounts') && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/accounts')}
+              sx={{ px: 3, py: 1, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            >
+              Add Account
+            </Button>
+          )}
         </Box>
         <Card>
           <TableContainer>
@@ -570,14 +576,16 @@ const DashboardPage: React.FC = () => {
               }} 
             />
           </Link>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={openTaskDialog}
-            sx={{ px: 3, py: 1, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-          >
-            Add Task
-          </Button>
+          {canCreate('tasks') && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={openTaskDialog}
+              sx={{ px: 3, py: 1, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+            >
+              Add Task
+            </Button>
+          )}
         </Box>
         <Card>
           <TableContainer>

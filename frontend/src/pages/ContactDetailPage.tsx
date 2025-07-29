@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Contact, Account } from '../types';
+import { usePermissions } from '../utils/rbac';
 import { Box, Typography, CircularProgress, Alert, Card, CardContent, Avatar, Chip, Divider, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, OutlinedInput, MenuItem, Checkbox, ListItemText as MuiListItemText, Grid } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
@@ -27,6 +28,7 @@ const ContactDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Contact>>({});
+  const { canUpdate } = usePermissions();
 
   useEffect(() => {
     const fetchContact = async () => {
@@ -80,6 +82,7 @@ const ContactDetailPage: React.FC = () => {
   };
 
   const handleEditSave = async () => {
+    if (!canUpdate('contacts')) return;
     if (contact && account) {
       try {
         const updated = await apiService.updateContact(account.id, contact.id, editForm);
@@ -134,9 +137,11 @@ const ContactDetailPage: React.FC = () => {
           {/* Contact Info Card */}
           <Card sx={{ minWidth: 320, maxWidth: 400, position: 'relative' }}>
             <CardContent>
-              <IconButton onClick={handleEditOpen} sx={{ position: 'absolute', top: 8, right: 8 }}>
-                <EditIcon />
-              </IconButton>
+                              {canUpdate('contacts') && (
+                  <IconButton onClick={handleEditOpen} sx={{ position: 'absolute', top: 8, right: 8 }}>
+                    <EditIcon />
+                  </IconButton>
+                )}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                 <Avatar sx={{ bgcolor: contact.isPrimary ? 'primary.main' : 'grey.300', color: 'white', width: 56, height: 56 }}>
                   <PersonIcon />

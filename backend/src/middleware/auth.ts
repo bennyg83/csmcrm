@@ -34,7 +34,7 @@ export const adminAuth = async (req: AuthRequest, res: Response, next: NextFunct
   try {
     await auth(req, res, () => {});
     
-    if (req.user?.role !== "admin") {
+    if (!req.user?.isAdmin()) {
       return res.status(403).json({ error: "Access denied. Admin role required." });
     }
     
@@ -45,7 +45,7 @@ export const adminAuth = async (req: AuthRequest, res: Response, next: NextFunct
 };
 
 export const adminOnly = (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (req.user?.role !== "admin") {
+  if (!req.user?.isAdmin()) {
     return res.status(403).json({ error: "Access denied. Admin role required." });
   }
   next();

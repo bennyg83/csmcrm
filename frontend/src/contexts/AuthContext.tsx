@@ -36,6 +36,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem('token');
       console.log('AuthContext - token found:', !!token);
       
+      // Always start with null user state
+      setUser(null);
+      
       if (token) {
         try {
           // Try to get user info with the token
@@ -48,6 +51,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.removeItem('token');
           setUser(null);
         }
+      } else {
+        // No token found, ensure user is null
+        console.log('AuthContext - no token found, setting user to null');
+        setUser(null);
       }
       setLoading(false);
       console.log('AuthContext - initAuth completed');
@@ -96,6 +103,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!user,
     setUser,
   };
+
+  // Debug logging for user state changes
+  useEffect(() => {
+    console.log('AuthContext - user state changed:', user);
+    console.log('AuthContext - isAuthenticated:', !!user);
+  }, [user]);
 
   return (
     <AuthContext.Provider value={value}>

@@ -50,39 +50,22 @@ class ApiService {
     );
   }
 
-  // Authentication (mock for testing)
+  // Authentication
   async login(email: string, password: string): Promise<LoginResponse> {
-    // Mock response for testing
-    return {
-      token: 'mock-token',
-      user: {
-        id: '1',
-        name: 'Test Admin',
-        email: 'admin@crm.com',
-        role: 'admin',
-        isGoogleUser: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    };
+    const response: AxiosResponse<LoginResponse> = await this.api.post('/auth/login', {
+      email,
+      password
+    });
+    return response.data;
   }
 
   async logout(): Promise<void> {
-    // Mock logout for testing
-    console.log('Mock logout');
+    await this.api.post('/auth/logout');
   }
 
   async getMe(): Promise<User> {
-    // Mock user for testing
-    return {
-      id: '1',
-      name: 'Test Admin',
-      email: 'admin@crm.com',
-      role: 'admin',
-      isGoogleUser: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    const response: AxiosResponse<{ user: User }> = await this.api.get('/auth/me');
+    return response.data.user;
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -134,6 +117,37 @@ class ApiService {
 
   async deleteAccount(id: string): Promise<void> {
     await this.api.delete(`/accounts/${id}`);
+  }
+
+  // Bulk Account Operations
+  async bulkUpdateAccounts(accountIds: string[], updates: Partial<Account>): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/accounts/bulk/update', {
+      accountIds,
+      updates
+    });
+    return response.data;
+  }
+
+  async bulkDeleteAccounts(accountIds: string[]): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/accounts/bulk/delete', {
+      accountIds
+    });
+    return response.data;
+  }
+
+  async bulkExportAccounts(accountIds?: string[], format: 'json' | 'csv' = 'json'): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/accounts/bulk/export', {
+      accountIds,
+      format
+    });
+    return response.data;
+  }
+
+  async bulkImportAccounts(accounts: Partial<Account>[]): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/accounts/bulk/import', {
+      accounts
+    });
+    return response.data;
   }
 
   async getRecentActivities(): Promise<AccountActivity[]> {
@@ -474,6 +488,162 @@ class ApiService {
 
   async getCalendarList(): Promise<any> {
     const response: AxiosResponse<any> = await this.api.get('/calendar/calendars');
+    return response.data;
+  }
+
+  // Lead Management
+  async getLeads(params?: { page?: number; limit?: number; status?: string; type?: string; priority?: string; assignedTo?: string; accountId?: string; search?: string }): Promise<any> {
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) queryParams.append(key, value.toString());
+      });
+    }
+    const response: AxiosResponse<any> = await this.api.get(`/leads?${queryParams.toString()}`);
+    return response.data;
+  }
+
+  async getLead(id: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get(`/leads/${id}`);
+    return response.data;
+  }
+
+  async createLead(leadData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/leads', leadData);
+    return response.data;
+  }
+
+  async updateLead(id: string, leadData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.put(`/leads/${id}`, leadData);
+    return response.data;
+  }
+
+  async deleteLead(id: string): Promise<void> {
+    await this.api.delete(`/leads/${id}`);
+  }
+
+  async getLeadStats(): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get('/leads/stats');
+    return response.data;
+  }
+
+  async addLeadNote(id: string, content: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post(`/leads/${id}/notes`, { content });
+    return response.data;
+  }
+
+  async addLeadActivity(id: string, activityData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post(`/leads/${id}/activities`, activityData);
+    return response.data;
+  }
+
+  // Workflow Management
+  async getWorkflows(): Promise<any[]> {
+    const response: AxiosResponse<any[]> = await this.api.get('/workflows');
+    return response.data;
+  }
+
+  async getWorkflow(id: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get(`/workflows/${id}`);
+    return response.data;
+  }
+
+  async createWorkflow(workflowData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/workflows', workflowData);
+    return response.data;
+  }
+
+  async updateWorkflow(id: string, workflowData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.put(`/workflows/${id}`, workflowData);
+    return response.data;
+  }
+
+  async deleteWorkflow(id: string): Promise<void> {
+    await this.api.delete(`/workflows/${id}`);
+  }
+
+  async toggleWorkflow(id: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.patch(`/workflows/${id}/toggle`);
+    return response.data;
+  }
+
+  async getWorkflowStats(): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get('/workflows/stats');
+    return response.data;
+  }
+
+  async testWorkflow(id: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post(`/workflows/${id}/test`);
+    return response.data;
+  }
+
+  // Report Management
+  async getReports(): Promise<any[]> {
+    const response: AxiosResponse<any[]> = await this.api.get('/reports');
+    return response.data;
+  }
+
+  async getReport(id: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get(`/reports/${id}`);
+    return response.data;
+  }
+
+  async createReport(reportData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/reports', reportData);
+    return response.data;
+  }
+
+  async updateReport(id: string, reportData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.put(`/reports/${id}`, reportData);
+    return response.data;
+  }
+
+  async deleteReport(id: string): Promise<void> {
+    await this.api.delete(`/reports/${id}`);
+  }
+
+  async executeReport(id: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post(`/reports/${id}/execute`);
+    return response.data;
+  }
+
+  async getReportTemplates(): Promise<any[]> {
+    const response: AxiosResponse<any[]> = await this.api.get('/reports/templates');
+    return response.data;
+  }
+
+  // RBAC Methods
+  async getRBACRoles(): Promise<any[]> {
+    const response: AxiosResponse<any[]> = await this.api.get('/rbac/roles');
+    return response.data;
+  }
+
+  async getRBACPermissions(): Promise<any[]> {
+    const response: AxiosResponse<any[]> = await this.api.get('/rbac/permissions');
+    return response.data;
+  }
+
+  async createRBACRole(roleData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/rbac/roles', roleData);
+    return response.data;
+  }
+
+  async updateRBACRole(roleId: string, roleData: any): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.put(`/rbac/roles/${roleId}`, roleData);
+    return response.data;
+  }
+
+  async deleteRBACRole(roleId: string): Promise<void> {
+    await this.api.delete(`/rbac/roles/${roleId}`);
+  }
+
+  async assignRoleToUser(userId: string, roleId: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/rbac/assign-role', { userId, roleId });
+    return response.data;
+  }
+
+  async initializeRBAC(): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/rbac/initialize');
     return response.data;
   }
 }

@@ -34,7 +34,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { userId: user.id, email: user.email, role: user.legacyRole },
       process.env.JWT_SECRET!,
       { expiresIn: "24h" }
     );
@@ -45,7 +45,8 @@ export const login = async (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role
+        role: user.legacyRole,
+        isGoogleUser: user.isGoogleUser
       }
     });
   } catch (error) {
@@ -76,7 +77,8 @@ export const getMe = async (req: AuthRequest, res: Response) => {
         id: req.user.id,
         email: req.user.email,
         name: req.user.name,
-        role: req.user.role
+        role: req.user.legacyRole,
+        isGoogleUser: req.user.isGoogleUser
       }
     });
   } catch (error) {
@@ -98,12 +100,14 @@ export const getAllUsers = async (req: Request, res: Response) => {
         id: true,
         name: true,
         email: true,
-        role: true,
+        legacyRole: true,
+        roleId: true,
         isGoogleUser: true,
         avatar: true,
         createdAt: true,
         updatedAt: true
       },
+      relations: ['role'],
       order: { createdAt: 'DESC' }
     });
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Typography, Box, CircularProgress, Alert, Chip, Grid, Paper, Divider, Card, CardContent, Avatar, Button, List, ListItem, ListItemText, Checkbox, TextField, IconButton, Menu, MenuItem, FormControl, InputLabel, Select, OutlinedInput, ListItemText as MuiListItemText, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Typography, Box, CircularProgress, Alert, Chip, Grid, Paper, Divider, Card, CardContent, Avatar, Button, List, ListItem, ListItemText, Checkbox, TextField, IconButton, Menu, MenuItem, FormControl, InputLabel, Select, OutlinedInput, ListItemText as MuiListItemText, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Account, Contact, Task } from '../types';
@@ -18,6 +18,7 @@ import {
   RestoreFromTrash as RestoreIcon
 } from '@mui/icons-material';
 import UserAutocomplete from '../components/UserAutocomplete';
+import { usePermissions } from '../utils/rbac';
 
 const CONTACT_TYPE_OPTIONS = [
   'DM',
@@ -252,6 +253,7 @@ const AccountDetailPage: React.FC = () => {
 
   // Contact type handlers
   const handleContactTypeChange = async (contactId: string, value: string[]) => {
+    if (!canUpdate('contacts')) return;
     setContactTypes((prev) => ({ ...prev, [contactId]: value }));
     const contact = account?.contacts?.find((c) => c.id === contactId);
     if (contact) {
@@ -276,6 +278,7 @@ const AccountDetailPage: React.FC = () => {
     }
   };
   const handleOtherTypeChange = async (contactId: string, value: string) => {
+    if (!canUpdate('contacts')) return;
     setOtherType((prev) => ({ ...prev, [contactId]: value }));
     const contact = account?.contacts?.find((c) => c.id === contactId);
     if (contact && (contactTypes[contactId] || []).includes('Other')) {
@@ -467,6 +470,8 @@ const AccountDetailPage: React.FC = () => {
     }
   };
 
+  const { canUpdate, canCreate, canDelete } = usePermissions();
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -508,7 +513,9 @@ const AccountDetailPage: React.FC = () => {
         <Typography variant="h4" gutterBottom>
           {account.name}
         </Typography>
-        <Button variant="outlined" size="small" onClick={handleEditOpen}>Edit</Button>
+                 {canUpdate('accounts') && (
+            <Button variant="outlined" size="small" onClick={handleEditOpen}>Edit</Button>
+         )}
       </Box>
       
       <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -561,9 +568,11 @@ const AccountDetailPage: React.FC = () => {
               <Typography variant="h6">
                 Next Upcoming Task
               </Typography>
-              <Button variant="contained" size="small" onClick={() => setShowCreateTask(true)}>
-                Create Task
-              </Button>
+                             {canCreate('tasks') && (
+                  <Button variant="contained" size="small" onClick={() => setShowCreateTask(true)}>
+                    Create Task
+                  </Button>
+               )}
             </Box>
             <Divider sx={{ mb: 2 }} />
             {account.tasks && account.tasks.filter(t => t.status !== 'Completed' && new Date(t.dueDate) > new Date()).length > 0 ? (
@@ -689,9 +698,16 @@ const AccountDetailPage: React.FC = () => {
 
       {/* Contact Cards Section */}
       <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, mb: 2 }}>
-          Contacts
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            Contacts
+          </Typography>
+          {canCreate('contacts') && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddContactOpen}>
+              Add Contact
+            </Button>
+          )}
+        </Box>
         <Grid container spacing={3}>
           {account.contacts && account.contacts.length > 0 ? (
             account.contacts.map((contact: Contact) => {
@@ -728,8 +744,12 @@ const AccountDetailPage: React.FC = () => {
                           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
-                          <MenuItem onClick={() => handleEditContact(contact)}>Edit Contact</MenuItem>
-                          <MenuItem onClick={() => handleDeleteContact(contact)}>Delete Contact</MenuItem>
+                          {canUpdate('contacts') && (
+                            <MenuItem onClick={() => handleEditContact(contact)}>Edit Contact</MenuItem>
+                          )}
+                          {canDelete('contacts') && (
+                            <MenuItem onClick={() => handleDeleteContact(contact)}>Delete Contact</MenuItem>
+                          )}
                         </Menu>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
@@ -740,33 +760,44 @@ const AccountDetailPage: React.FC = () => {
                         {contact.email} | {contact.phone}
                       </Typography>
                       {/* Contact Type Multi-Select */}
-                      <FormControl sx={{ mt: 1, mb: 2, width: '100%' }} size="small">
-                        <InputLabel>Contact Type</InputLabel>
-                        <Select
-                          multiple
-                          value={types}
-                          onChange={(e) => handleContactTypeChange(contact.id, typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
-                          input={<OutlinedInput label="Contact Type" />}
-                          renderValue={(selected) => (selected as string[]).join(', ')}
-                        >
-                          {CONTACT_TYPE_OPTIONS.map((type) => (
-                            <MenuItem key={type} value={type}>
-                              <Checkbox checked={types.indexOf(type) > -1} />
-                              <MuiListItemText primary={type} />
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      {/* If 'Other' is selected, show free text input */}
-                      {types.includes('Other') && (
-                        <TextField
-                          size="small"
-                          variant="outlined"
-                          label="Other Type"
-                          value={other}
-                          onChange={(e) => handleOtherTypeChange(contact.id, e.target.value)}
-                          sx={{ mb: 2, width: '100%' }}
-                        />
+                      {canUpdate('contacts') ? (
+                        <>
+                          <FormControl sx={{ mt: 1, mb: 2, width: '100%' }} size="small">
+                            <InputLabel>Contact Type</InputLabel>
+                            <Select
+                              multiple
+                              value={types}
+                              onChange={(e) => handleContactTypeChange(contact.id, typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
+                              input={<OutlinedInput label="Contact Type" />}
+                              renderValue={(selected) => (selected as string[]).join(', ')}
+                            >
+                              {CONTACT_TYPE_OPTIONS.map((type) => (
+                                <MenuItem key={type} value={type}>
+                                  <Checkbox checked={types.indexOf(type) > -1} />
+                                  <MuiListItemText primary={type} />
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                          {/* If 'Other' is selected, show free text input */}
+                          {types.includes('Other') && (
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              label="Other Type"
+                              value={other}
+                              onChange={(e) => handleOtherTypeChange(contact.id, e.target.value)}
+                              sx={{ mb: 2, width: '100%' }}
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <Box sx={{ mt: 1, mb: 2 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Contact Types:</strong> {types.join(', ')}
+                            {types.includes('Other') && other && ` (${other})`}
+                          </Typography>
+                        </Box>
                       )}
                       {/* Tasks for this contact */}
                       <Divider sx={{ my: 2 }} />
@@ -830,9 +861,11 @@ const AccountDetailPage: React.FC = () => {
                 <Typography variant="body1" color="text.secondary">
                   No contacts found for this account.
                 </Typography>
-                <Button variant="contained" startIcon={<AddIcon />} sx={{ mt: 2 }} onClick={handleAddContactOpen}>
-                  Add Contact
-                </Button>
+                {canCreate('contacts') && (
+                  <Button variant="contained" startIcon={<AddIcon />} sx={{ mt: 2 }} onClick={handleAddContactOpen}>
+                    Add Contact
+                  </Button>
+                )}
               </Paper>
             </Grid>
           )}

@@ -80,6 +80,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import KanbanBoard from '../components/KanbanBoard';
+import { usePermissions } from '../utils/rbac';
 
 const locales = {
   'en-US': enUS,
@@ -159,6 +160,8 @@ const TasksPage: React.FC = () => {
     progress: 0,
     createCalendarEvent: false
   });
+
+  const { canCreate } = usePermissions();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -640,13 +643,15 @@ const TasksPage: React.FC = () => {
             >
               Filters
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => openTaskDialog()}
-            >
-              Add Task
-            </Button>
+            {canCreate('tasks') && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => openTaskDialog()}
+              >
+                Add Task
+              </Button>
+            )}
           </Box>
         </Box>
 

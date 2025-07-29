@@ -53,7 +53,7 @@ const UserManagement: React.FC = () => {
     password: ''
   });
 
-  const roleIcons = {
+  const roleIcons: Record<string, React.ReactElement> = {
     admin: <AdminIcon />,
     manager: <WorkIcon />,
     sales: <SalesIcon />,
@@ -61,13 +61,13 @@ const UserManagement: React.FC = () => {
     user: <PersonIcon />
   };
 
-  const roleColors = {
+  const roleColors: Record<string, "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"> = {
     admin: 'error',
     manager: 'warning',
     sales: 'success',
     support: 'info',
     user: 'default'
-  } as const;
+  };
 
   useEffect(() => {
     loadUsers();
@@ -96,7 +96,7 @@ const UserManagement: React.FC = () => {
     setUserForm({
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: user.role || user.legacyRole || 'user',
       password: ''
     });
     setShowDialog(true);
@@ -144,8 +144,36 @@ const UserManagement: React.FC = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const getRoleLabel = (role: string) => {
-    return role.charAt(0).toUpperCase() + role.slice(1);
+  const getRoleName = (role: any) => {
+    if (!role) return null;
+    
+    // Handle case where role is an object (from relations)
+    if (typeof role === 'object' && role.name) {
+      return role.name;
+    }
+    
+    // Handle case where role is a string
+    if (typeof role === 'string') {
+      return role;
+    }
+    
+    return null;
+  };
+
+  const getRoleLabel = (role: any) => {
+    if (!role) return 'No Role';
+    
+    // Handle case where role is an object (from relations)
+    if (typeof role === 'object' && role.name) {
+      return role.name.charAt(0).toUpperCase() + role.name.slice(1);
+    }
+    
+    // Handle case where role is a string
+    if (typeof role === 'string') {
+      return role.charAt(0).toUpperCase() + role.slice(1);
+    }
+    
+    return 'No Role';
   };
 
   if (loading) {
@@ -192,9 +220,9 @@ const UserManagement: React.FC = () => {
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     <Chip
-                      icon={roleIcons[user.role as keyof typeof roleIcons]}
-                      label={getRoleLabel(user.role)}
-                      color={roleColors[user.role as keyof typeof roleColors]}
+                      icon={roleIcons[getRoleName(user.role || user.legacyRole) || 'user']}
+                      label={getRoleLabel(user.role || user.legacyRole)}
+                      color={roleColors[getRoleName(user.role || user.legacyRole) || 'user']}
                       size="small"
                     />
                   </TableCell>

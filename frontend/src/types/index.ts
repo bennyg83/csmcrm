@@ -3,7 +3,8 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'user' | 'manager' | 'sales' | 'support';
+  role?: string; // New RBAC role
+  legacyRole?: 'admin' | 'user' | 'manager' | 'sales' | 'support'; // Legacy role for backward compatibility
   isGoogleUser: boolean;
   avatar?: string;
   createdAt: string;

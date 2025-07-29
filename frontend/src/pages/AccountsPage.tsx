@@ -45,6 +45,8 @@ import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Account } from '../types';
 import OnboardingQuestionnaire from '../components/OnboardingQuestionnaire';
+import BulkAccountOperations from '../components/BulkAccountOperations';
+import { usePermissions } from '../utils/rbac';
 
 const CSM_OPTIONS = ['Amanda Lee', 'Robert Taylor', 'Jennifer Smith', 'Michael Chen'];
 const AM_OPTIONS = ['Michael Chen', 'David Wilson', 'Sarah Johnson'];
@@ -61,6 +63,9 @@ const AccountsPage: React.FC = () => {
   const [addAccountForm, setAddAccountForm] = useState<Partial<Account>>({});
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  
+  // RBAC permissions
+  const { canCreate, canWrite } = usePermissions();
 
   // Filter state
   const [selectedCSMs, setSelectedCSMs] = useState<string[]>([]);
@@ -68,6 +73,10 @@ const AccountsPage: React.FC = () => {
   const [selectedSE, setSelectedSE] = useState('');
   const [selectedTier, setSelectedTier] = useState('');
   const [selectedHealth, setSelectedHealth] = useState('');
+
+  // Bulk operations state
+  const [showBulkOperations, setShowBulkOperations] = useState(false);
+  const [accountTiers, setAccountTiers] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -84,7 +93,17 @@ const AccountsPage: React.FC = () => {
       }
     };
 
+    const fetchAccountTiers = async () => {
+      try {
+        const tiers = await apiService.getAccountTiers();
+        setAccountTiers(tiers);
+      } catch (err) {
+        console.error('Error fetching account tiers:', err);
+      }
+    };
+
     fetchAccounts();
+    fetchAccountTiers();
   }, []);
 
   // Filter accounts based on search and selected filters
@@ -204,6 +223,20 @@ const AccountsPage: React.FC = () => {
     fetchAccounts();
   };
 
+  const handleAccountsUpdated = () => {
+    // Refresh accounts after bulk operations
+    const fetchAccounts = async () => {
+      try {
+        const data = await apiService.getAccounts();
+        setAccounts(data);
+      } catch (err) {
+        console.error('Error fetching accounts:', err);
+        setError('Failed to load accounts');
+      }
+    };
+    fetchAccounts();
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -235,36 +268,66 @@ const AccountsPage: React.FC = () => {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={() => setOnboardingOpen(true)}
-            sx={{ 
-              px: 3, 
-              py: 1.5,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600
-            }}
-          >
-            Onboarding Questionnaire
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddAccount}
-            sx={{ 
-              px: 3, 
-              py: 1.5,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600
-            }}
-          >
-            Quick Add Account
-          </Button>
+          {canWrite('accounts') && (
+            <Button
+              variant="outlined"
+              onClick={() => setShowBulkOperations(!showBulkOperations)}
+              sx={{ 
+                px: 3, 
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600
+              }}
+            >
+              {showBulkOperations ? 'Hide Bulk Operations' : 'Bulk Operations'}
+            </Button>
+          )}
+          {canCreate('accounts') && (
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={() => setOnboardingOpen(true)}
+              sx={{ 
+                px: 3, 
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600
+              }}
+            >
+              Onboarding Questionnaire
+            </Button>
+          )}
+          {canCreate('accounts') && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddAccount}
+              sx={{ 
+                px: 3, 
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600
+              }}
+            >
+              Quick Add Account
+            </Button>
+          )}
         </Box>
       </Box>
+
+      {/* Bulk Operations */}
+      {showBulkOperations && canWrite('accounts') && (
+        <Box sx={{ mb: 3 }}>
+          <BulkAccountOperations
+            accounts={filteredAccounts}
+            accountTiers={accountTiers}
+            onAccountsUpdated={handleAccountsUpdated}
+          />
+        </Box>
+      )}
 
       {/* Search Bar and Filters */}
       <Box sx={{ mb: 3 }}>

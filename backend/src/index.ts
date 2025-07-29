@@ -81,6 +81,11 @@ import accountTierRoutes from "./routes/accountTiers";
 import categoryRoutes from "./routes/categories";
 import documentRoutes from "./routes/documents";
 import calendarRoutes from "./routes/calendar";
+import leadRoutes from "./routes/leads";
+import workflowRoutes from "./routes/workflows";
+import reportRoutes from "./routes/reports";
+import rbacRoutes from "./routes/rbac";
+
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", googleAuthRoutes);
@@ -95,6 +100,10 @@ app.use("/api/account-tiers", accountTierRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/leads", leadRoutes);
+app.use("/api/workflows", workflowRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/rbac", rbacRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

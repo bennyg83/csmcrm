@@ -139,6 +139,20 @@ const LoginPage: React.FC = () => {
             <Typography variant="body2" color="text.secondary" align="center">
               Demo credentials: admin@crm.com / admin123
             </Typography>
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => {
+                  console.log('=== DEBUG AUTH STATE ===');
+                  console.log('localStorage token:', localStorage.getItem('token'));
+                  console.log('sessionStorage:', Object.keys(sessionStorage));
+                  console.log('cookies:', document.cookie);
+                }}
+              >
+                Debug Auth State
+              </Button>
+            </Box>
           </Box>
         </Paper>
       </Box>

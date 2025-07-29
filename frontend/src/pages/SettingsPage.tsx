@@ -28,11 +28,14 @@ import {
   Delete as DeleteIcon,
   Settings as SettingsIcon,
   People as PeopleIcon,
-  Category as CategoryIcon
+  Category as CategoryIcon,
+  Security as SecurityIcon
 } from '@mui/icons-material';
 import { apiService } from '../services/api';
 import { AccountTier } from '../types';
 import UserManagement from '../components/UserManagement';
+import RBACManager from '../components/RBACManager';
+import { forceLogout } from '../utils/forceLogout';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -179,6 +182,14 @@ const SettingsPage: React.FC = () => {
             Manage users, account tiers, and system configuration
           </Typography>
         </Box>
+        <Button
+          variant="outlined"
+          color="error"
+          onClick={forceLogout}
+          sx={{ px: 3, py: 1, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+        >
+          Force Logout
+        </Button>
       </Box>
 
       {/* Settings Tabs */}
@@ -195,6 +206,12 @@ const SettingsPage: React.FC = () => {
             label="Account Tiers" 
             id="settings-tab-1"
             aria-controls="settings-tabpanel-1"
+          />
+          <Tab 
+            icon={<SecurityIcon />} 
+            label="RBAC" 
+            id="settings-tab-2"
+            aria-controls="settings-tabpanel-2"
           />
         </Tabs>
       </Box>
@@ -269,6 +286,11 @@ const SettingsPage: React.FC = () => {
             </Table>
           </TableContainer>
         </Paper>
+      </TabPanel>
+
+      {/* RBAC Tab */}
+      <TabPanel value={currentTab} index={2}>
+        <RBACManager />
       </TabPanel>
 
       {/* Edit/Create Tier Modal */}

@@ -5,10 +5,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   BeforeInsert,
-  BeforeUpdate
+  BeforeUpdate,
+  ManyToOne,
+  JoinColumn
 } from "typeorm";
 import { IsEmail, MinLength, IsOptional } from "class-validator";
 import * as bcrypt from "bcryptjs";
+import { Role } from "./Role";
 
 @Entity("users")
 export class User {
@@ -28,12 +31,18 @@ export class User {
   @IsOptional()
   password?: string;
 
-  @Column({
-    type: "enum",
-    enum: ["admin", "user", "manager", "sales", "support"],
-    default: "user"
-  })
-  role!: "admin" | "user" | "manager" | "sales" | "support";
+  @Column({ nullable: true })
+  @IsOptional()
+  legacyRole?: "admin" | "user" | "manager" | "sales" | "support";
+
+  // New RBAC relationship
+  @Column({ nullable: true })
+  roleId?: string;
+
+  // RBAC relationship
+  @ManyToOne(() => Role, role => role.users, { nullable: true })
+  @JoinColumn({ name: "roleId" })
+  role?: Role;
 
   // Google SSO fields
   @Column({ nullable: true, unique: true })
@@ -94,5 +103,30 @@ export class User {
   isGoogleTokenExpired(): boolean {
     if (!this.googleTokenExpiry) return true;
     return new Date() >= this.googleTokenExpiry;
+  }
+
+  // RBAC helper methods
+  getRoleName(): string {
+    return this.role?.name || this.legacyRole || 'user';
+  }
+
+  hasPermission(permissionName: string): boolean {
+    return this.role?.hasPermission(permissionName) || false;
+  }
+
+  hasAnyPermission(permissionNames: string[]): boolean {
+    return this.role?.hasAnyPermission(permissionNames) || false;
+  }
+
+  hasAllPermissions(permissionNames: string[]): boolean {
+    return this.role?.hasAllPermissions(permissionNames) || false;
+  }
+
+  isAdmin(): boolean {
+    return this.getRoleName() === 'admin' || this.legacyRole === 'admin';
+  }
+
+  isManager(): boolean {
+    return this.getRoleName() === 'manager' || this.legacyRole === 'manager';
   }
 } 
