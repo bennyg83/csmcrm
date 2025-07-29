@@ -1,6 +1,43 @@
-2.3.1
+2.3.2
 
 # CRM System Version History
+# v2.3.2 - File Extension Fixes & RBAC Permission System Overhaul
+# - 🔧 CRITICAL: Fixed file extension issues causing bundling errors
+#   * Renamed frontend/src/utils/rbac.ts to rbac.tsx (JSX content required .tsx extension)
+#   * Resolved "GET http://localhost:5173/src/utils/rbac.ts net::ERR_ABORTED 500" error
+#   * Fixed React component bundling issues with proper file extensions
+#   * Ensured all JSX-containing files use .tsx extension for proper compilation
+# - 🔐 MAJOR: RBAC Permission System Overhaul & Security Hardening
+#   * Implemented comprehensive permission checks for contact operations
+#   * Added role-based UI controls for create, read, update, delete operations
+#   * Protected contact creation, editing, and deletion based on user roles
+#   * Enhanced AccountDetailPage.tsx with permission-aware UI components
+#   * Added permission checks to ContactDetailPage.tsx edit functionality
+#   * Implemented read-only contact type display for users without write permissions
+#   * Fixed permission bypass where 'User' role could create contacts (should be read-only)
+# - 🎨 UI/UX Enhancements
+#   * Added conditional "Add Contact" buttons based on user permissions
+#   * Implemented permission-aware contact type editing (form controls vs read-only display)
+#   * Enhanced contact management with role-based menu options
+#   * Improved user experience with graceful permission degradation
+# - 🏗️ Backend Infrastructure
+#   * Added comprehensive RBAC entities (Role, Permission, User-Role relationships)
+#   * Implemented RBAC middleware for secure API endpoint protection
+#   * Added lead management system with full CRUD operations
+#   * Implemented workflow management system for process automation
+#   * Added reporting system with customizable analytics
+#   * Enhanced database schema with proper foreign key relationships
+# - 🔧 Development & DevOps
+#   * Added GitHub Actions workflow for frontend deployment
+#   * Enhanced development scripts for user management and RBAC setup
+#   * Improved Docker configuration and containerization
+#   * Added comprehensive migration scripts for new features
+# - 🐛 Bug Fixes
+#   * Fixed file extension issues causing development server failures
+#   * Resolved permission bypass vulnerabilities in contact management
+#   * Fixed UI inconsistencies with permission-based component rendering
+#   * Improved error handling and user feedback for permission violations
+
 # v2.3.1 - Dependency Fixes & Configuration Backup
 # - 🔧 FIXED: Added missing googleapis dependency to package.json
 #   * Resolved "Cannot find module 'googleapis'" error
