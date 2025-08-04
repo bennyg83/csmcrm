@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import DashboardPage from './pages/DashboardPage';
+import ManagementDashboard from './pages/ManagementDashboard';
 import AccountsPage from './pages/AccountsPage';
 import AccountDetailPage from './pages/AccountDetailPage';
 import TasksPage from './pages/TasksPage';
@@ -16,6 +17,7 @@ import LoginPage from './pages/LoginPage';
 import Layout from './components/Layout';
 import ContactDetailPage from './pages/ContactDetailPage';
 import { GoogleAuthSuccess, GoogleAuthError } from './pages/GoogleAuthCallback';
+import PortalApp from './pages/ExternalPortal/PortalApp';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -205,6 +207,16 @@ const App: React.FC = () => {
               }
             />
             <Route
+              path="/management"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ManagementDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/accounts"
               element={
                 <ProtectedRoute>
@@ -299,6 +311,9 @@ const App: React.FC = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/google/success" element={<GoogleAuthSuccess />} />
             <Route path="/auth/google/error" element={<GoogleAuthError />} />
+            
+            {/* External Portal routes */}
+            <Route path="/portal/*" element={<PortalApp />} />
           </Routes>
         </Router>
       </AuthProvider>

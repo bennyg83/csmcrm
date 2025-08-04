@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn
 } from "typeorm";
 import { MinLength, Min, Max, IsOptional } from "class-validator";
@@ -92,4 +93,7 @@ export class Task {
   @ManyToOne("Category", "tasks")
   @JoinColumn({ name: "categoryId" })
   category!: any;
+
+  @OneToMany("TaskComment", "task")
+  comments!: any[];
 } 

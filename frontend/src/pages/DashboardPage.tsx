@@ -34,7 +34,9 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   Business as BusinessIcon,
@@ -44,7 +46,9 @@ import {
   AttachMoney as MoneyIcon,
   Favorite as HealthIcon,
   Schedule as ScheduleIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  Dashboard as DashboardIcon,
+  List as ListIcon
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
@@ -63,6 +67,39 @@ const SE_OPTIONS = ['Alex Thompson', 'Tom Anderson', 'Rachel Green'];
 const TIER_OPTIONS = ['Enterprise', 'Business', 'Starter'];
 const HEALTH_OPTIONS = ['Healthy', 'At Risk', 'Critical'];
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`dashboard-tabpanel-${index}`}
+      aria-labelledby={`dashboard-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ pt: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
+function a11yProps(index: number) {
+  return {
+    id: `dashboard-tab-${index}`,
+    'aria-controls': `dashboard-tabpanel-${index}`,
+  };
+}
+
 const DashboardPage: React.FC = () => {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,6 +107,7 @@ const DashboardPage: React.FC = () => {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [search, setSearch] = useState('');
+  const [tabValue, setTabValue] = useState(0);
   
   // RBAC permissions
   const { canCreate } = usePermissions();
@@ -78,6 +116,7 @@ const DashboardPage: React.FC = () => {
   const [selectedSE, setSelectedSE] = useState('');
   const [selectedTier, setSelectedTier] = useState('');
   const [selectedHealth, setSelectedHealth] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const navigate = useNavigate();
@@ -96,6 +135,10 @@ const DashboardPage: React.FC = () => {
     tags: [] as string[],
     progress: 0
   });
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -143,6 +186,90 @@ const DashboardPage: React.FC = () => {
 
     fetchDashboardData();
   }, []);
+
+  // Filter data based on selected filters
+  const getFilteredData = () => {
+    let filteredAccounts = [...accounts];
+    let filteredTasks = [...tasks];
+
+    // Filter by search
+    if (search) {
+      const searchLower = search.toLowerCase();
+      filteredAccounts = filteredAccounts.filter(account =>
+        account.name.toLowerCase().includes(searchLower) ||
+        account.email.toLowerCase().includes(searchLower) ||
+        account.industry?.toLowerCase().includes(searchLower)
+      );
+      filteredTasks = filteredTasks.filter(task =>
+        task.title.toLowerCase().includes(searchLower) ||
+        task.description.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Filter by CSM
+    if (selectedCSMs.length > 0) {
+      filteredAccounts = filteredAccounts.filter(account =>
+        selectedCSMs.includes(account.customerSuccessManager)
+      );
+    }
+
+    // Filter by Account Manager
+    if (selectedAM) {
+      filteredAccounts = filteredAccounts.filter(account =>
+        account.accountManager === selectedAM
+      );
+    }
+
+    // Filter by Solutions Engineer
+    if (selectedSE) {
+      filteredAccounts = filteredAccounts.filter(account =>
+        account.salesEngineer === selectedSE
+      );
+    }
+
+    // Filter by Tier
+    if (selectedTier) {
+      filteredAccounts = filteredAccounts.filter(account =>
+        account.tier?.name === selectedTier
+      );
+    }
+
+    // Filter by Health
+    if (selectedHealth) {
+      filteredAccounts = filteredAccounts.filter(account => {
+        if (selectedHealth === 'Healthy') return account.health >= 70;
+        if (selectedHealth === 'At Risk') return account.health >= 40 && account.health < 70;
+        if (selectedHealth === 'Critical') return account.health < 40;
+        return true;
+      });
+    }
+
+    // Filter by Team Members (users)
+    if (selectedUsers.length > 0) {
+      filteredAccounts = filteredAccounts.filter(account =>
+        selectedUsers.includes(account.accountManager) ||
+        selectedUsers.includes(account.customerSuccessManager) ||
+        selectedUsers.includes(account.salesEngineer)
+      );
+    }
+
+    return { filteredAccounts, filteredTasks };
+  };
+
+  // Calculate filtered metrics
+  const getFilteredMetrics = () => {
+    const { filteredAccounts, filteredTasks } = getFilteredData();
+    
+    return {
+      totalAccounts: filteredAccounts.length,
+      totalTasks: filteredTasks.length,
+      activeAccounts: filteredAccounts.filter(acc => acc.status === 'active').length,
+      atRiskAccounts: filteredAccounts.filter(acc => acc.status === 'at-risk').length,
+      totalRevenue: filteredAccounts.reduce((sum, acc) => sum + Number(acc.revenue), 0),
+      averageHealthScore: filteredAccounts.reduce((sum, acc) => sum + acc.health, 0) / filteredAccounts.length || 0,
+      recentActivities: metrics?.recentActivities || []
+    };
+  };
 
   const MetricCard = ({ 
     title, 
@@ -224,6 +351,7 @@ const DashboardPage: React.FC = () => {
     if (type === 'SE') setSelectedSE('');
     if (type === 'Tier') setSelectedTier('');
     if (type === 'Health') setSelectedHealth('');
+    if (type === 'User') setSelectedUsers(selectedUsers.filter((userId) => userId !== value));
   };
 
   const openTaskDialog = () => {
@@ -284,380 +412,55 @@ const DashboardPage: React.FC = () => {
 
   return (
     <Box>
-      {/* Search and Filters */}
+      {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Search accounts or contacts..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-            sx: { backgroundColor: 'white', borderRadius: 2 }
+        <Typography variant="h3" gutterBottom sx={{ fontWeight: 700 }}>
+          Dashboard
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Welcome back! Here's an overview of your CRM performance.
+        </Typography>
+      </Box>
+
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs 
+          value={tabValue} 
+          onChange={handleTabChange} 
+          aria-label="dashboard tabs"
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: '1rem',
+              minHeight: 48
+            }
           }}
-        />
-        {/* Filter Chips */}
-        <Box sx={{ mt: 2, mb: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          {selectedCSMs.length > 0 && (
-            <Chip
-              label={
-                <span>
-                  <b>CSM:</b> {selectedCSMs.join(', ')}
-                </span>
-              }
-              onDelete={() => setSelectedCSMs([])}
-              color="primary"
-            />
-          )}
-          {selectedAM && (
-            <Chip
-              label={<span><b>AM:</b> {selectedAM}</span>}
-              onDelete={() => setSelectedAM('')}
-              color="primary"
-            />
-          )}
-          {selectedSE && (
-            <Chip
-              label={<span><b>SE:</b> {selectedSE}</span>}
-              onDelete={() => setSelectedSE('')}
-              color="primary"
-            />
-          )}
-          {selectedTier && (
-            <Chip
-              label={<span><b>Tier:</b> {selectedTier}</span>}
-              onDelete={() => setSelectedTier('')}
-              color="primary"
-            />
-          )}
-          {selectedHealth && (
-            <Chip
-              label={<span><b>Health:</b> {selectedHealth}</span>}
-              onDelete={() => setSelectedHealth('')}
-              color="primary"
-            />
-          )}
-        </Box>
-        {/* Filter Controls */}
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 1 }}>
-          <FormControl sx={{ minWidth: 180 }} size="small">
-            <InputLabel>CSM</InputLabel>
-            <Select
-              multiple
-              value={selectedCSMs}
-              onChange={(e) => setSelectedCSMs(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-              input={<OutlinedInput label="CSM" />}
-              renderValue={(selected) => (selected as string[]).join(', ')}
-            >
-              {CSM_OPTIONS.map((name) => (
-                <MenuItem key={name} value={name}>
-                  <Checkbox checked={selectedCSMs.indexOf(name) > -1} />
-                  <MuiListItemText primary={name} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ minWidth: 180 }} size="small">
-            <InputLabel>Account Manager</InputLabel>
-            <Select
-              value={selectedAM}
-              onChange={(e) => setSelectedAM(e.target.value)}
-              label="Account Manager"
-            >
-              <MenuItem value=""><em>None</em></MenuItem>
-              {AM_OPTIONS.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ minWidth: 180 }} size="small">
-            <InputLabel>Solutions Engineer</InputLabel>
-            <Select
-              value={selectedSE}
-              onChange={(e) => setSelectedSE(e.target.value)}
-              label="Solutions Engineer"
-            >
-              <MenuItem value=""><em>None</em></MenuItem>
-              {SE_OPTIONS.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ minWidth: 140 }} size="small">
-            <InputLabel>Tier</InputLabel>
-            <Select
-              value={selectedTier}
-              onChange={(e) => setSelectedTier(e.target.value)}
-              label="Tier"
-            >
-              <MenuItem value=""><em>None</em></MenuItem>
-              {TIER_OPTIONS.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ minWidth: 140 }} size="small">
-            <InputLabel>Health</InputLabel>
-            <Select
-              value={selectedHealth}
-              onChange={(e) => setSelectedHealth(e.target.value)}
-              label="Health"
-            >
-              <MenuItem value=""><em>None</em></MenuItem>
-              {HEALTH_OPTIONS.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
+        >
+          <Tab 
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <DashboardIcon sx={{ fontSize: 20 }} />
+                Overview
+              </Box>
+            } 
+            {...a11yProps(0)} 
+          />
+          <Tab 
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ListIcon sx={{ fontSize: 20 }} />
+                Accounts & Tasks
+              </Box>
+            } 
+            {...a11yProps(1)} 
+          />
+        </Tabs>
       </Box>
-      {/* Accounts Table Section - at the top */}
-      <Box sx={{ mb: 6 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Link
-            component={RouterLink}
-            to="/accounts"
-            underline="none"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              cursor: 'pointer',
-              px: 0.5,
-              borderRadius: 1,
-              transition: 'background 0.2s, color 0.2s',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-                color: 'primary.main',
-                textDecoration: 'none',
-                '& .section-icon': {
-                  transform: 'translateX(2px)'
-                }
-              }
-            }}
-          >
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 600, transition: 'color 0.2s ease' }}
-            >
-              Accounts
-            </Typography>
-            <OpenInNewIcon
-              className="section-icon"
-              sx={{ fontSize: 18, color: 'text.secondary', transition: 'transform 0.2s, color 0.2s' }}
-            />
-          </Link>
-          {canCreate('accounts') && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate('/accounts')}
-              sx={{ px: 3, py: 1, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-            >
-              Add Account
-            </Button>
-          )}
-        </Box>
-        <Card>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Account Name</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Industry</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>AM</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>CS</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>SE/PS</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Health</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>ARR</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Renewal</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {accounts.slice(0, 5).map((account) => (
-                  <TableRow key={account.id} hover>
-                    <TableCell>
-                      <Link
-                        component={RouterLink}
-                        to={`/accounts/${account.id}`}
-                        sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.5 }}
-                        underline="hover"
-                      >
-                        {account.name}
-                        <OpenInNewIcon sx={{ fontSize: 16, ml: 0.5 }} />
-                      </Link>
-                    </TableCell>
-                    <TableCell>{account.industry || 'N/A'}</TableCell>
-                    <TableCell>{account.accountManager || 'N/A'}</TableCell>
-                    <TableCell>{account.customerSuccessManager || 'N/A'}</TableCell>
-                    <TableCell>{account.salesEngineer || 'N/A'}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <CircleIcon sx={{ fontSize: 12, color: getHealthColor(account.health) }} />
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: getHealthColor(account.health) }}>
-                          {account.health}%
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={account.status}
-                        color={getStatusColor(account.status) as any}
-                        size="small"
-                        sx={{ fontSize: '0.75rem', fontWeight: 500 }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        ${account.arr.toLocaleString()}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {(() => {
-                          const renewal = new Date(account.renewalDate);
-                          const today = new Date();
-                          const diffTime = renewal.getTime() - today.getTime();
-                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                          return `${diffDays} days`;
-                        })()}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Card>
-      </Box>
-      {/* Tasks Table Section - below accounts */}
-      <Box sx={{ mb: 6 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Link
-            component={RouterLink}
-            to="/tasks"
-            underline="none"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              cursor: 'pointer',
-              px: 0.5,
-              borderRadius: 1,
-              transition: 'background 0.2s, color 0.2s',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-                color: 'primary.main',
-                textDecoration: 'none',
-                '& .section-icon': {
-                  transform: 'translateX(2px)'
-                }
-              }
-            }}
-          >
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 600, transition: 'color 0.2s ease' }}
-            >
-              Tasks
-            </Typography>
-            <OpenInNewIcon 
-              className="section-icon"
-              sx={{ 
-                fontSize: 18, 
-                color: 'text.secondary',
-                transition: 'transform 0.2s ease, color 0.2s ease'
-              }} 
-            />
-          </Link>
-          {canCreate('tasks') && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={openTaskDialog}
-              sx={{ px: 3, py: 1, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
-            >
-              Add Task
-            </Button>
-          )}
-        </Box>
-        <Card>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Title</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Account</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Assigned To</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Priority</TableCell>
-                  <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Due Date</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tasks
-                  .slice()
-                  .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-                  .slice(0, 5)
-                  .map((task) => (
-                    <TableRow key={task.id} hover>
-                      <TableCell>
-                        <Link
-                          component={RouterLink}
-                          to={`/tasks/${task.id}`}
-                          sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.5 }}
-                          underline="hover"
-                        >
-                          {task.title}
-                          <OpenInNewIcon sx={{ fontSize: 16, ml: 0.5 }} />
-                        </Link>
-                      </TableCell>
-                      <TableCell>{task.accountName || 'N/A'}</TableCell>
-                      <TableCell>{task.assignedTo || 'N/A'}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={task.status}
-                          color={task.status === 'Completed' ? 'success' : task.status === 'In Progress' ? 'warning' : 'default'}
-                          size="small"
-                          sx={{ fontSize: '0.75rem', fontWeight: 500 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={task.priority}
-                          color={task.priority === 'High' ? 'error' : task.priority === 'Medium' ? 'warning' : 'default'}
-                          size="small"
-                          sx={{ fontSize: '0.75rem', fontWeight: 500 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Card>
-      </Box>
-      {/* ... existing dashboard metrics, charts, and activities ... */}
-      <Box>
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h3" gutterBottom sx={{ fontWeight: 700 }}>
-            Dashboard
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Welcome back! Here's an overview of your CRM performance.
-          </Typography>
-        </Box>
+
+      {/* Tab Panels */}
+      <TabPanel value={tabValue} index={0}>
+        {/* Overview Tab - Metrics and Recent Activities */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={3}>
             <MetricCard
@@ -717,68 +520,468 @@ const DashboardPage: React.FC = () => {
           </Grid>
         </Grid>
         {/* Recent Activities */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', mr: 2 }}>
-                  <ScheduleIcon />
-                </Avatar>
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                  Recent Activities
-                </Typography>
-              </Box>
-              
-              {metrics?.recentActivities && metrics.recentActivities.length > 0 ? (
-                <List sx={{ p: 0 }}>
-                  {metrics.recentActivities.map((activity, index) => (
-                    <React.Fragment key={activity.id}>
-                      <ListItem sx={{ px: 0, py: 1.5 }}>
-                        <ListItemText
-                          primary={
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                              {activity.description}
-                            </Typography>
-                          }
-                          secondary={
-                            <Typography variant="caption" color="text.secondary" component="div">
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                                <Chip
-                                  label={activity.type}
-                                  size="small"
-                                  color="primary"
-                                  variant="outlined"
-                                  sx={{ fontSize: '0.75rem' }}
-                                />
-                                <Typography variant="caption" color="text.secondary">
-                                  {new Date(activity.date).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })}
-                                </Typography>
-                              </Box>
-                            </Typography>
-                          }
-                        />
-                      </ListItem>
-                      {index < metrics.recentActivities.length - 1 && (
-                        <Divider sx={{ my: 1 }} />
-                      )}
-                    </React.Fragment>
-                  ))}
-                </List>
-              ) : (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    No recent activities
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Card>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                  <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.main', mr: 2 }}>
+                    <ScheduleIcon />
+                  </Avatar>
+                  <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                    Recent Activities
                   </Typography>
                 </Box>
-              )}
-            </CardContent>
-          </Card>
+                
+                {metrics?.recentActivities && metrics.recentActivities.length > 0 ? (
+                  <List sx={{ p: 0 }}>
+                    {metrics.recentActivities.map((activity, index) => (
+                      <React.Fragment key={activity.id}>
+                        <ListItem sx={{ px: 0, py: 1.5 }}>
+                          <ListItemText
+                            primary={
+                              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                {activity.description}
+                              </Typography>
+                            }
+                            secondary={
+                              <Typography variant="caption" color="text.secondary" component="div">
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                  <Chip
+                                    label={activity.type}
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                    sx={{ fontSize: '0.75rem' }}
+                                  />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {new Date(activity.date).toLocaleDateString('en-US', {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                  </Typography>
+                                </Box>
+                              </Typography>
+                            }
+                          />
+                        </ListItem>
+                        {index < metrics.recentActivities.length - 1 && (
+                          <Divider sx={{ my: 1 }} />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </List>
+                ) : (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No recent activities
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-      </Box>
+      </TabPanel>
+
+      <TabPanel value={tabValue} index={1}>
+        {/* Accounts & Tasks Tab - Search, Filters, and Tables */}
+        {/* Search and Filters */}
+        <Box sx={{ mb: 4 }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search accounts or contacts..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+              sx: { backgroundColor: 'white', borderRadius: 2 }
+            }}
+          />
+          {/* Filter Chips */}
+          <Box sx={{ mt: 2, mb: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            {selectedCSMs.length > 0 && (
+              <Chip
+                label={
+                  <span>
+                    <b>CSM:</b> {selectedCSMs.join(', ')}
+                  </span>
+                }
+                onDelete={() => setSelectedCSMs([])}
+                color="primary"
+              />
+            )}
+            {selectedAM && (
+              <Chip
+                label={<span><b>AM:</b> {selectedAM}</span>}
+                onDelete={() => setSelectedAM('')}
+                color="primary"
+              />
+            )}
+            {selectedSE && (
+              <Chip
+                label={<span><b>SE:</b> {selectedSE}</span>}
+                onDelete={() => setSelectedSE('')}
+                color="primary"
+              />
+            )}
+            {selectedTier && (
+              <Chip
+                label={<span><b>Tier:</b> {selectedTier}</span>}
+                onDelete={() => setSelectedTier('')}
+                color="primary"
+              />
+            )}
+            {selectedHealth && (
+              <Chip
+                label={<span><b>Health:</b> {selectedHealth}</span>}
+                onDelete={() => setSelectedHealth('')}
+                color="primary"
+              />
+            )}
+            {selectedUsers.length > 0 && (
+              <Chip
+                label={
+                  <span>
+                    <b>Team:</b> {selectedUsers.map(userId => users.find(u => u.id === userId)?.name || userId).join(', ')}
+                  </span>
+                }
+                onDelete={() => setSelectedUsers([])}
+                color="primary"
+              />
+            )}
+          </Box>
+          {/* Filter Controls */}
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 1 }}>
+            <FormControl sx={{ minWidth: 180 }} size="small">
+              <InputLabel>CSM</InputLabel>
+              <Select
+                multiple
+                value={selectedCSMs}
+                onChange={(e) => setSelectedCSMs(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                input={<OutlinedInput label="CSM" />}
+                renderValue={(selected) => (selected as string[]).join(', ')}
+              >
+                {CSM_OPTIONS.map((name) => (
+                  <MenuItem key={name} value={name}>
+                    <Checkbox checked={selectedCSMs.indexOf(name) > -1} />
+                    <MuiListItemText primary={name} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 180 }} size="small">
+              <InputLabel>Account Manager</InputLabel>
+              <Select
+                value={selectedAM}
+                onChange={(e) => setSelectedAM(e.target.value)}
+                label="Account Manager"
+              >
+                <MenuItem value=""><em>None</em></MenuItem>
+                {AM_OPTIONS.map((name) => (
+                  <MenuItem key={name} value={name}>{name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 180 }} size="small">
+              <InputLabel>Solutions Engineer</InputLabel>
+              <Select
+                value={selectedSE}
+                onChange={(e) => setSelectedSE(e.target.value)}
+                label="Solutions Engineer"
+              >
+                <MenuItem value=""><em>None</em></MenuItem>
+                {SE_OPTIONS.map((name) => (
+                  <MenuItem key={name} value={name}>{name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 140 }} size="small">
+              <InputLabel>Tier</InputLabel>
+              <Select
+                value={selectedTier}
+                onChange={(e) => setSelectedTier(e.target.value)}
+                label="Tier"
+              >
+                <MenuItem value=""><em>None</em></MenuItem>
+                {TIER_OPTIONS.map((name) => (
+                  <MenuItem key={name} value={name}>{name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 140 }} size="small">
+              <InputLabel>Health</InputLabel>
+              <Select
+                value={selectedHealth}
+                onChange={(e) => setSelectedHealth(e.target.value)}
+                label="Health"
+              >
+                <MenuItem value=""><em>None</em></MenuItem>
+                {HEALTH_OPTIONS.map((name) => (
+                  <MenuItem key={name} value={name}>{name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 180 }} size="small">
+              <InputLabel>Team Member</InputLabel>
+              <Select
+                multiple
+                value={selectedUsers}
+                onChange={(e) => setSelectedUsers(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                input={<OutlinedInput label="Team Member" />}
+                renderValue={(selected) => (selected as string[]).map(userId => users.find(u => u.id === userId)?.name || userId).join(', ')}
+              >
+                {users.map((user) => (
+                  <MenuItem key={user.id} value={user.id}>
+                    <Checkbox checked={selectedUsers.indexOf(user.id) > -1} />
+                    <MuiListItemText primary={user.name} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </Box>
+
+        {/* Accounts Table Section */}
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Link
+              component={RouterLink}
+              to="/accounts"
+              underline="none"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                cursor: 'pointer',
+                px: 0.5,
+                borderRadius: 1,
+                transition: 'background 0.2s, color 0.2s',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                  color: 'primary.main',
+                  textDecoration: 'none',
+                  '& .section-icon': {
+                    transform: 'translateX(2px)'
+                  }
+                }
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 600, transition: 'color 0.2s ease' }}
+              >
+                Accounts
+              </Typography>
+              <OpenInNewIcon
+                className="section-icon"
+                sx={{ fontSize: 18, color: 'text.secondary', transition: 'transform 0.2s, color 0.2s' }}
+              />
+            </Link>
+            {canCreate('accounts') && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => navigate('/accounts')}
+                sx={{ px: 3, py: 1, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+              >
+                Add Account
+              </Button>
+            )}
+          </Box>
+          <Card>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Account Name</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Industry</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>AM</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>CS</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>SE/PS</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Health</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>ARR</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Renewal</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {accounts.slice(0, 5).map((account) => (
+                    <TableRow key={account.id} hover>
+                      <TableCell>
+                        <Link
+                          component={RouterLink}
+                          to={`/accounts/${account.id}`}
+                          sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.5 }}
+                          underline="hover"
+                        >
+                          {account.name}
+                          <OpenInNewIcon sx={{ fontSize: 16, ml: 0.5 }} />
+                        </Link>
+                      </TableCell>
+                      <TableCell>{account.industry || 'N/A'}</TableCell>
+                      <TableCell>{account.accountManager || 'N/A'}</TableCell>
+                      <TableCell>{account.customerSuccessManager || 'N/A'}</TableCell>
+                      <TableCell>{account.salesEngineer || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CircleIcon sx={{ fontSize: 12, color: getHealthColor(account.health) }} />
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: getHealthColor(account.health) }}>
+                            {account.health}%
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={account.status}
+                          color={getStatusColor(account.status) as any}
+                          size="small"
+                          sx={{ fontSize: '0.75rem', fontWeight: 500 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          ${account.arr.toLocaleString()}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {(() => {
+                            const renewal = new Date(account.renewalDate);
+                            const today = new Date();
+                            const diffTime = renewal.getTime() - today.getTime();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            return `${diffDays} days`;
+                          })()}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
+        </Box>
+
+        {/* Tasks Table Section */}
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Link
+              component={RouterLink}
+              to="/tasks"
+              underline="none"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                cursor: 'pointer',
+                px: 0.5,
+                borderRadius: 1,
+                transition: 'background 0.2s, color 0.2s',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                  color: 'primary.main',
+                  textDecoration: 'none',
+                  '& .section-icon': {
+                    transform: 'translateX(2px)'
+                  }
+                }
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: 600, transition: 'color 0.2s ease' }}
+              >
+                Tasks
+              </Typography>
+              <OpenInNewIcon 
+                className="section-icon"
+                sx={{ 
+                  fontSize: 18, 
+                  color: 'text.secondary',
+                  transition: 'transform 0.2s ease, color 0.2s ease'
+                }} 
+              />
+            </Link>
+            {canCreate('tasks') && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={openTaskDialog}
+                sx={{ px: 3, py: 1, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+              >
+                Add Task
+              </Button>
+            )}
+          </Box>
+          <Card>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Title</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Account</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Assigned To</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Priority</TableCell>
+                    <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Due Date</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {tasks
+                    .slice()
+                    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+                    .slice(0, 5)
+                    .map((task) => (
+                      <TableRow key={task.id} hover>
+                        <TableCell>
+                          <Link
+                            component={RouterLink}
+                            to={`/tasks/${task.id}`}
+                            sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.5 }}
+                            underline="hover"
+                          >
+                            {task.title}
+                            <OpenInNewIcon sx={{ fontSize: 16, ml: 0.5 }} />
+                          </Link>
+                        </TableCell>
+                        <TableCell>{task.accountName || 'N/A'}</TableCell>
+                        <TableCell>{task.assignedTo || 'N/A'}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={task.status}
+                            color={task.status === 'Completed' ? 'success' : task.status === 'In Progress' ? 'warning' : 'default'}
+                            size="small"
+                            sx={{ fontSize: '0.75rem', fontWeight: 500 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={task.priority}
+                            color={task.priority === 'High' ? 'error' : task.priority === 'Medium' ? 'warning' : 'default'}
+                            size="small"
+                            sx={{ fontSize: '0.75rem', fontWeight: 500 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'N/A'}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
+        </Box>
+      </TabPanel>
 
       {/* Task Creation Dialog */}
       <Dialog 

@@ -15,8 +15,8 @@ export const usePermissions = () => {
 
     // Define role-based permissions
     const rolePermissions: Record<string, string[]> = {
-      'manager': ['accounts.read', 'accounts.write', 'contacts.read', 'contacts.write', 'tasks.read', 'tasks.write'],
-      'Manager': ['accounts.read', 'accounts.write', 'contacts.read', 'contacts.write', 'tasks.read', 'tasks.write'],
+      'manager': ['accounts.read', 'accounts.write', 'contacts.read', 'contacts.write', 'tasks.read', 'tasks.write', 'reports.read', 'users.read', 'analytics.read'],
+      'Manager': ['accounts.read', 'accounts.write', 'contacts.read', 'contacts.write', 'tasks.read', 'tasks.write', 'reports.read', 'users.read', 'analytics.read'],
       'sales': ['accounts.read', 'accounts.write', 'contacts.read', 'contacts.write', 'tasks.read', 'tasks.write'],
       'Sales': ['accounts.read', 'accounts.write', 'contacts.read', 'contacts.write', 'tasks.read', 'tasks.write'],
       'support': ['accounts.read', 'contacts.read', 'tasks.read', 'tasks.write'],
@@ -49,6 +49,10 @@ export const usePermissions = () => {
     return canWrite(resource);
   };
 
+  const canView = (resource: string): boolean => {
+    return canRead(resource);
+  };
+
   return {
     hasPermission,
     canRead,
@@ -56,6 +60,7 @@ export const usePermissions = () => {
     canCreate,
     canUpdate,
     canDelete,
+    canView,
     user
   };
 };

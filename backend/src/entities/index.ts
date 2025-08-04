@@ -2,6 +2,7 @@ export { User } from './User';
 export { Account } from './Account';
 export { Contact } from './Contact';
 export { Task } from './Task';
+export { TaskComment } from './TaskComment';
 export { Note } from './Note';
 export { AccountTier } from './AccountTier';
 export { AccountActivity } from './AccountActivity';

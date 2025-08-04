@@ -108,4 +108,75 @@ export const deleteContact = async (req: Request, res: Response) => {
     console.error("Delete contact error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
+};
+
+export const inviteToPortal = async (req: Request, res: Response) => {
+  try {
+    const { accountId, contactId } = req.params;
+    const contactRepository = AppDataSource.getRepository(Contact);
+    
+    const contact = await contactRepository.findOne({
+      where: { id: contactId, accountId },
+      relations: ["account"]
+    });
+
+    if (!contact) {
+      return res.status(404).json({ error: "Contact not found" });
+    }
+
+    if (contact.hasPortalAccess) {
+      return res.status(400).json({ error: "Contact already has portal access" });
+    }
+
+    // Generate invitation token
+    const inviteToken = contact.generatePortalInviteToken();
+    await contactRepository.save(contact);
+
+    // In a real application, you would send an email here
+    // For now, we'll return the invitation link
+    const inviteLink = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/portal/setup?token=${inviteToken}`;
+
+    res.json({
+      message: "Portal invitation created successfully",
+      inviteLink: inviteLink,
+      contact: {
+        id: contact.id,
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+        email: contact.email
+      }
+    });
+  } catch (error) {
+    console.error("Invite to portal error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const revokePortalAccess = async (req: Request, res: Response) => {
+  try {
+    const { accountId, contactId } = req.params;
+    const contactRepository = AppDataSource.getRepository(Contact);
+    
+    const contact = await contactRepository.findOne({
+      where: { id: contactId, accountId }
+    });
+
+    if (!contact) {
+      return res.status(404).json({ error: "Contact not found" });
+    }
+
+    // Revoke portal access
+    contact.hasPortalAccess = false;
+    contact.isPortalActive = false;
+    contact.portalPassword = null;
+    contact.portalInviteToken = null;
+    contact.portalInviteExpiry = null;
+    
+    await contactRepository.save(contact);
+
+    res.json({ message: "Portal access revoked successfully" });
+  } catch (error) {
+    console.error("Revoke portal access error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 }; 

@@ -1,0 +1,33 @@
+GCP FREE TIER DEPLOYMENT STEPS
+================================
+
+TARGET DATE: August 10th, 2024
+
+PURPOSE: Deploy CRM to GCP free tier for testing and friend feedback
+COST: $0/month (free tier)
+
+QUICK STEPS:
+1. Install Google Cloud CLI
+2. Create GCP project
+3. Enable APIs: Cloud Run, Cloud SQL, Cloud Build
+4. Create PostgreSQL instance (db-f1-micro, 1GB)
+5. Deploy backend to Cloud Run
+6. Deploy frontend to Cloud Run
+7. Test and share URL with friends
+
+COMMANDS:
+gcloud init
+gcloud services enable run.googleapis.com sqladmin.googleapis.com cloudbuild.googleapis.com
+gcloud sql instances create crm-db --database-version=POSTGRES_14 --tier=db-f1-micro --region=us-central1
+gcloud run deploy crm-backend --source ./backend --platform managed --region us-central1 --allow-unauthenticated
+gcloud run deploy crm-frontend --source ./frontend --platform managed --region us-central1 --allow-unauthenticated
+
+RESOURCES:
+- GCP Free Tier: https://cloud.google.com/free
+- Cloud Run docs: https://cloud.google.com/run/docs
+
+NOTES:
+- Perfect for friend feedback
+- Production-like environment
+- Easy to scale later
+- Should cost $0 for testing phase 

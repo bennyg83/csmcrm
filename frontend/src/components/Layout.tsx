@@ -25,7 +25,8 @@ import {
   IntegrationInstructions as IntegrationIcon,
   Person as PersonIcon,
   CalendarToday as CalendarIcon,
-  Email as EmailIcon
+  Email as EmailIcon,
+  BarChart as ManagementIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -38,6 +39,7 @@ const drawerWidth = 220;
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: <DashboardIcon /> },
+  { path: '/management', label: 'Management', icon: <ManagementIcon />, management: true },
   { path: '/accounts', label: 'Accounts', icon: <BusinessIcon /> },
   { path: '/tasks', label: 'Tasks', icon: <TaskIcon /> },
   { path: '/calendar', label: 'Calendar', icon: <CalendarIcon /> },
@@ -64,7 +66,10 @@ const Sidebar: React.FC<{ userRole: string; activePath: string; onNavigate: (pat
     <Toolbar />
     <Box sx={{ overflow: 'auto', px: 1 }}>
       <List>
-        {navItems.filter(item => !item.admin || userRole === 'admin').map((item) => (
+        {navItems.filter(item => 
+          (!item.admin || userRole === 'admin') && 
+          (!item.management || userRole === 'admin' || userRole === 'manager')
+        ).map((item) => (
           <ListItem key={item.path} disablePadding>
             <ListItemButton
               selected={activePath === item.path}

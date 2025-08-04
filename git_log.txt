@@ -1,0 +1,10 @@
+113d3d9 📝 Update VERSION to 2.3.2 with comprehensive release notes
+fd11284 🔧 v2.3.2: File Extension Fixes & RBAC Permission System Overhaul
+967eb9d v2.3.2: Email UI Overhaul, Calendar Integration & LLM Enablement
+75f5062 🚀 Release v2.3.1: Dependency Fixes & Configuration Backup
+01e12c2 🚀 Release v2.3.0: Gmail Integration & User Management System
+b188db6 Merge branch 'main' of https://github.com/bennyg83/mine_dont_touch # Please enter a commit message to explain why this merge is necessary, # especially if it merges an updated upstream into a topic branch. # # Lines starting with '#' will be ignored, and an empty message aborts # the commit.
+cd57d2c Release v2.2.0: Enhanced Task Management & Kanban Board
+358e9c1 Merge pull request #1 from bennyg83/whitesource/configure
+18dce85 Add .whitesource configuration file
+173ae1b Release v2.1.0: Enhanced Document Processing & LLM Integration
