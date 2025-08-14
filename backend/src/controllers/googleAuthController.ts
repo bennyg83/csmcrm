@@ -74,7 +74,10 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
 
       await userRepository.save(user);
     } else {
-      // Create new user
+      // Create new user. If this is the first user in the system, make them admin
+      const totalUsers = await userRepository.count();
+      const isFirstUser = totalUsers === 0;
+
       user = userRepository.create({
         email: googleProfile.email,
         name: googleProfile.name,
@@ -84,7 +87,7 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
         googleTokenExpiry: expiryDate,
         avatar: googleProfile.picture,
         isGoogleUser: true,
-        role: 'user' // Default role for Google users
+        legacyRole: isFirstUser ? 'admin' : 'user'
       });
 
       await userRepository.save(user);
@@ -99,7 +102,7 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
     const payload = { 
       userId: user.id, 
       email: user.email, 
-      role: user.role,
+      role: user.legacyRole || user.role,
       isGoogleUser: true 
     };
 

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
 import { 
   portalLogin, 
   setupPortalAccess, 
@@ -12,7 +13,8 @@ import { portalAuth } from "../middleware/portalAuth";
 const router = Router();
 
 // Public routes (no authentication required)
-router.post("/login", portalLogin);
+const portalLoginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false });
+router.post("/login", portalLoginLimiter, portalLogin);
 router.post("/setup", setupPortalAccess);
 
 // Protected routes (require portal authentication)

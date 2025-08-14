@@ -132,9 +132,24 @@ const IntegrationsPage: React.FC = () => {
   const handleConnect = async (integration: Integration) => {
     try {
       if (integration.id === 'gmail' || integration.id === 'google-calendar') {
-        // Both Gmail and Calendar use the same Google OAuth flow
-        // The scope includes both Gmail and Calendar permissions
-        window.location.href = '/auth/google';
+        // Redirect to backend OAuth endpoint (same logic as LoginPage)
+        const normalizeApiBase = (value: string): string => {
+          let v = (value || '').trim();
+          if (!v) return 'http://localhost:3000/api';
+          if (v.startsWith('http')) {
+            if (/^https?:\/\/[^/]+:\/?($|[^0-9])/.test(v)) {
+              v = v.replace(/^(https?:\/\/[^/]+):(?=\/|$)/, '$1:3000');
+            }
+            return v;
+          }
+          const origin = window.location.origin || 'http://localhost:5173';
+          return new URL(v, origin).toString();
+        };
+
+        const rawApiBaseUrl = (import.meta.env.VITE_API_URL as string) ?? '';
+        const resolvedBase = normalizeApiBase(rawApiBaseUrl);
+        const apiRoot = resolvedBase.endsWith('/api') ? resolvedBase : resolvedBase.replace(/\/+$/, '') + '/api';
+        window.location.href = `${apiRoot}/auth/google`;
       } else {
         setSelectedIntegration(integration);
         setSettingsOpen(true);

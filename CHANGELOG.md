@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2025-01-20
+
+### 🔧 Major Features Added
+
+#### Welcome Email System
+- **Automatic Welcome Emails**: New users now receive professional welcome emails when accounts are created
+- **Gmail Integration**: Leverages existing Gmail API integration for sending system emails
+- **SMTP Fallback**: Backup email service using SMTP if Gmail integration fails
+- **Professional Templates**: Both plain text and HTML email templates with branding
+- **Enhanced Onboarding**: Users receive login credentials and app URLs automatically
+
+#### Task Management Improvements
+- **Unified Task Components**: Standardized TaskTable and KanbanBoard across Account and Contact pages
+- **Full-Width Layout**: Tasks sections now match Notes section width for consistent UI
+- **Enhanced Task Display**: Tasks on contact pages now use the same components as main tasks page
+- **Improved Task Filtering**: Better task assignment and filtering for client users
+
+#### Global Search Enhancement
+- **Cross-Page Search**: Search functionality available from any screen in the UI
+- **Multi-Entity Search**: Search across accounts, contacts, tasks, and emails
+- **Direct Navigation**: Search results lead directly to relevant detail pages
+- **Pre-filled Search**: Global search can pre-populate search fields on target pages
+
+### 🎨 UI/UX Enhancements
+- **Consistent Layout**: Account and Contact pages now have matching task section layouts
+- **Better Task Integration**: Contact pages display tasks with full table/kanban functionality
+- **Improved Navigation**: Better flow between different sections and pages
+- **Enhanced User Experience**: More intuitive task management and user onboarding
+
+### 🔐 Security & Authentication
+- **Enhanced User Creation**: Admin-created users now receive proper onboarding emails
+- **Better Password Management**: Temporary passwords are securely communicated via email
+- **Improved User Flow**: New users can immediately access the system with provided credentials
+
+### 🚀 Technical Improvements
+- **Email Service Architecture**: Robust email service with fallback capabilities
+- **Component Reusability**: Shared TaskTable component across multiple pages
+- **Better Error Handling**: Graceful degradation when email services are unavailable
+- **Code Organization**: Improved separation of concerns and service architecture
+
+---
+
 ## [2.3.0] - 2025-01-20
 
 ### 🔧 Major Features Added

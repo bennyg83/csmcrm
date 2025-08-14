@@ -42,10 +42,32 @@ const LoginPage: React.FC = () => {
     setGoogleLoading(true);
     setError('');
     
-    // Get the base URL and ensure we don't double up on /api
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    const baseUrl = apiBaseUrl.endsWith('/api') ? apiBaseUrl.slice(0, -4) : apiBaseUrl;
-    window.location.href = `${baseUrl}/api/auth/google`;
+    // Resolve API base URL to a full origin (with port) even if it's relative like "/api"
+    const normalizeApiBase = (value: string): string => {
+      let v = (value || '').trim();
+      if (!v) return 'http://localhost:3000/api';
+      if (v.startsWith('http')) {
+        // Fix invalid patterns like http://localhost:/api (missing port after colon)
+        if (/^https?:\/\/[^/]+:\/?($|[^0-9])/.test(v)) {
+          v = v.replace(/^(https?:\/\/[^/]+):(?=\/|$)/, '$1:3000');
+        }
+        return v;
+      }
+      const origin = window.location.origin || 'http://localhost:5173';
+      return new URL(v, origin).toString();
+    };
+
+    const rawApiBaseUrl = (import.meta.env.VITE_API_URL as string) ?? '';
+    const resolvedBase = normalizeApiBase(rawApiBaseUrl);
+    
+    // Ensure we have an /api root, then append auth path
+    const apiRoot = resolvedBase.endsWith('/api')
+      ? resolvedBase
+      : resolvedBase.replace(/\/+$/, '') + '/api';
+    
+    const finalUrl = `${apiRoot}/auth/google`;
+    console.log('Google auth redirect:', finalUrl);
+    window.location.href = finalUrl;
   };
 
   return (

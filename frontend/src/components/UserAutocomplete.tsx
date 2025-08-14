@@ -90,6 +90,11 @@ const UserAutocomplete: React.FC<UserAutocompleteProps> = ({
             );
           }
         } else if (context === 'external') {
+          // Require accountId for external selections; without it, do not load global contacts
+          if (!accountId) {
+            setOptions([]);
+            return;
+          }
           // Only load contacts
           if (accountContacts && accountContacts.length > 0) {
             // Only show contacts from this account

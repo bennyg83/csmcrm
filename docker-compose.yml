@@ -1,82 +1,83 @@
 services:
-  # PostgreSQL Database
-  postgres:
+  # PostgreSQL Database (Feature Branch)
+  postgres-fb:
     image: postgres:15
-    container_name: crm-postgres
     environment:
-      POSTGRES_DB: crm_db
-      POSTGRES_USER: crm_user
-      POSTGRES_PASSWORD: crm_password
+      POSTGRES_DB: crm_db_fb
+      POSTGRES_USER: crm_user_fb
+      POSTGRES_PASSWORD: crm_password_fb
     ports:
-      - "5432:5432"
+      - "${CRM2_POSTGRES_PORT}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_fb:/var/lib/postgresql/data
     networks:
-      - crm-network
+      - crm-network-fb
 
-  # Ollama LLM Service
-  ollama:
+  # Ollama LLM Service (Feature Branch)
+  ollama-fb:
     image: ollama/ollama:latest
-    container_name: crm-ollama
     ports:
-      - "11434:11434"
+      - "${CRM2_OLLAMA_PORT}:11434"
     volumes:
-      - ollama_data:/root/.ollama
+      - ollama_data_fb:/root/.ollama
     networks:
-      - crm-network
+      - crm-network-fb
     restart: unless-stopped
 
-  # Backend API
-  backend:
+  # Backend API (Feature Branch)
+  backend-fb:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: crm-backend
     environment:
       NODE_ENV: development
-      DB_HOST: postgres
+      DB_HOST: postgres-fb
       DB_PORT: 5432
-      DB_NAME: crm_db
-      DB_USER: crm_user
-      DB_PASSWORD: crm_password
-      JWT_SECRET: your-super-secret-jwt-key-change-in-production
-      OLLAMA_ENDPOINT: http://ollama:11434
+      DB_NAME: crm_db_fb
+      DB_USER: crm_user_fb
+      DB_PASSWORD: crm_password_fb
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production-fb
+      OLLAMA_ENDPOINT: http://ollama-fb:11434
+      # Google SSO
+      GOOGLE_CLIENT_ID: ${CRM2_GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${CRM2_GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: http://localhost:${CRM2_BACKEND_PORT}/api/auth/google/callback
+      FRONTEND_URL: http://localhost:${CRM2_FRONTEND_PORT}
     ports:
-      - "3000:3000"
+      - "${CRM2_BACKEND_PORT}:3000"
     volumes:
       - ./backend:/app
       - /app/node_modules
       - ./uploads:/app/uploads
     depends_on:
-      - postgres
-      - ollama
+      - postgres-fb
+      - ollama-fb
     networks:
-      - crm-network
+      - crm-network-fb
     command: npm run dev
 
-  # Frontend React App
-  frontend:
+  # Frontend React App (Feature Branch)
+  frontend-fb:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: crm-frontend
     environment:
-      VITE_API_URL: http://localhost:3000/api
+      VITE_API_URL: http://localhost:${CRM2_BACKEND_PORT}/api
     ports:
-      - "5173:5173"
+      - "${CRM2_FRONTEND_PORT}:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
-      - backend
+      - backend-fb
     networks:
-      - crm-network
+      - crm-network-fb
     command: npm run dev -- --host 0.0.0.0
 
 volumes:
-  postgres_data:
-  ollama_data:
+  postgres_data_fb:
+  ollama_data_fb:
 
 networks:
-  crm-network:
+  crm-network-fb:
     driver: bridge 

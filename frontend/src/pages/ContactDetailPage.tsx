@@ -1,14 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Contact, Account } from '../types';
 import { usePermissions } from '../utils/rbac';
-import { Box, Typography, CircularProgress, Alert, Card, CardContent, Avatar, Chip, Divider, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, OutlinedInput, MenuItem, Checkbox, ListItemText as MuiListItemText, Grid } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, Card, CardContent, Avatar, Chip, Divider, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, OutlinedInput, MenuItem, Checkbox, ListItemText as MuiListItemText, Grid, ToggleButtonGroup, ToggleButton, Paper } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EditIcon from '@mui/icons-material/Edit';
+import ListIcon from '@mui/icons-material/List';
+import KanbanIcon from '@mui/icons-material/ViewColumn';
 import EmailHistory from '../components/EmailHistory';
+import { Task, Category } from '../types';
+import TaskTable from '../components/TaskTable';
+import KanbanBoard from '../components/KanbanBoard';
 
 const CONTACT_TYPE_OPTIONS = [
   'DM',
@@ -28,7 +33,23 @@ const ContactDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Contact>>({});
-  const { canUpdate } = usePermissions();
+  const { canUpdate, canCreate } = usePermissions();
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [showContactKanban, setShowContactKanban] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [taskViewMode, setTaskViewMode] = useState<'table' | 'kanban'>('table');
+  const [showCreateTask, setShowCreateTask] = useState(false);
+
+  // Filtered tasks for this contact
+  const filteredTasks = useMemo(() => {
+    if (!account?.tasks || !contact) return [];
+    return account.tasks.filter((t: Task) => {
+      const assignedClients = Array.isArray(t.assignedToClient) ? t.assignedToClient : t.assignedToClient ? [t.assignedToClient] : [];
+      const isAssignedToContact = assignedClients.includes(contact.id);
+      const isAssignedToContactByName = assignedClients.includes(`${contact.firstName} ${contact.lastName}`);
+      return isAssignedToContact || isAssignedToContactByName;
+    });
+  }, [account?.tasks, contact]);
 
   useEffect(() => {
     const fetchContact = async () => {
@@ -36,7 +57,8 @@ const ContactDetailPage: React.FC = () => {
         setLoading(true);
         setError(null);
         if (id) {
-          const accounts = await apiService.getAccounts();
+          const [accounts, cats] = await Promise.all([apiService.getAccounts(), apiService.getCategories()]);
+          setCategories(cats);
           let foundContact: Contact | null = null;
           let foundAccount: Account | null = null;
           for (const acc of accounts) {
@@ -50,7 +72,13 @@ const ContactDetailPage: React.FC = () => {
             }
           }
           setContact(foundContact);
-          setAccount(foundAccount);
+          // Load full account with tasks for this contact's account
+          if (foundAccount) {
+            const fullAccount = await apiService.getAccount(foundAccount.id);
+            setAccount(fullAccount);
+          } else {
+            setAccount(null);
+          }
         }
       } catch (err) {
         setError('Failed to load contact details');
@@ -92,6 +120,37 @@ const ContactDetailPage: React.FC = () => {
         alert('Failed to update contact');
       }
     }
+  };
+
+  const handleCreateTaskForContact = async () => {
+    if (!contact || !account || !newTaskTitle.trim()) return;
+    try {
+      await apiService.createTask({
+        title: newTaskTitle.trim(),
+        description: `Task for ${contact.firstName} ${contact.lastName}`,
+        status: 'To Do',
+        priority: 'Medium',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        assignedTo: [],
+        assignedToClient: [contact.id],
+        accountId: account.id,
+        accountName: account.name,
+        subTasks: [],
+        dependencies: [],
+        isDependent: false,
+        progress: 0
+      });
+      setNewTaskTitle('');
+      // refresh account to surface tasks created under this account
+      const updatedAcc = await apiService.getAccount(account.id);
+      setAccount(updatedAcc);
+    } catch (err) {
+      alert('Failed to create task');
+    }
+  };
+
+  const handleCreateTask = () => {
+    setShowCreateTask(true);
   };
 
   if (loading) {
@@ -186,7 +245,10 @@ const ContactDetailPage: React.FC = () => {
                 <Divider sx={{ mb: 2 }} />
                 <Typography variant="body1"><b>Name:</b> <Button component={RouterLink} to={`/accounts/${account.id}`}>{account.name}</Button></Typography>
                 <Typography variant="body2"><b>Industry:</b> {account.industry || 'N/A'}</Typography>
-                <Typography variant="body2"><b>Status:</b> <Chip label={account.status} color={account.status === 'active' ? 'success' : account.status === 'at-risk' ? 'warning' : 'default'} size="small" /></Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2"><b>Status:</b></Typography>
+                  <Chip label={account.status} color={account.status === 'active' ? 'success' : account.status === 'at-risk' ? 'warning' : 'default'} size="small" />
+                </Box>
                 <Typography variant="body2"><b>Health:</b> {account.health}%</Typography>
                 <Typography variant="body2"><b>Revenue:</b> ${account.revenue.toLocaleString()}</Typography>
                 <Typography variant="body2"><b>Account Manager:</b> {account.accountManager}</Typography>
@@ -196,13 +258,84 @@ const ContactDetailPage: React.FC = () => {
             </Card>
           )}
         </Grid>
-
-        <Grid item xs={12}>
-          {/* Email History */}
-          <EmailHistory contactId={contact.id} title="Email History" />
-        </Grid>
       </Grid>
-        {/* Edit Contact Modal */}
+
+      {/* Tasks Section - full width to match Notes width */}
+      {account && (
+        <Box sx={{ mb: 4 }}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">
+                Tasks for this contact ({filteredTasks.length})
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <ToggleButtonGroup
+                  value={taskViewMode}
+                  exclusive
+                  onChange={(_, newMode) => newMode && setTaskViewMode(newMode)}
+                  size="small"
+                >
+                  <ToggleButton value="table">
+                    <ListIcon fontSize="small" />
+                  </ToggleButton>
+                  <ToggleButton value="kanban">
+                    <KanbanIcon fontSize="small" />
+                  </ToggleButton>
+                </ToggleButtonGroup>
+                {canCreate('tasks') && (
+                  <Button variant="contained" size="small" onClick={handleCreateTask}>
+                    Create Task
+                  </Button>
+                )}
+              </Box>
+            </Box>
+
+            {/* Task Table/Kanban View */}
+            {taskViewMode === 'table' ? (
+              <TaskTable
+                tasks={filteredTasks}
+                categories={categories}
+                onRowClick={() => {}}
+                onEdit={async (task) => {
+                  try {
+                    const updated = await apiService.updateTask(task.id, task);
+                    const updatedAcc = await apiService.getAccount(account.id);
+                    setAccount(updatedAcc);
+                  } catch {}
+                }}
+                onDelete={async (taskId) => {
+                  if (!confirm('Delete this task?')) return;
+                  try {
+                    await apiService.deleteTask(taskId);
+                    const updatedAcc = await apiService.getAccount(account.id);
+                    setAccount(updatedAcc);
+                  } catch {}
+                }}
+              />
+            ) : (
+              <KanbanBoard
+                tasks={filteredTasks}
+                onTaskUpdate={async (taskId, updates) => {
+                  try {
+                    await apiService.updateTask(taskId, updates);
+                    const updatedAcc = await apiService.getAccount(account.id);
+                    setAccount(updatedAcc);
+                  } catch {}
+                }}
+                onTaskClick={() => {}}
+                onTaskEdit={() => {}}
+              />
+            )}
+          </Paper>
+        </Box>
+      )}
+
+      {/* Email History Section */}
+      <Box sx={{ mb: 4 }}>
+        <EmailHistory contactId={contact.id} title="Email History" />
+      </Box>
+
+      {/* Edit Contact Modal */}
         <Dialog open={editOpen} onClose={handleEditClose} maxWidth="xs" fullWidth>
           <DialogTitle>Edit Contact</DialogTitle>
           <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

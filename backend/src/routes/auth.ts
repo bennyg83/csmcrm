@@ -1,4 +1,7 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
+import { z } from "zod";
+import { validate } from "../middleware/validate";
 import { 
   login, 
   logout, 
@@ -12,8 +15,21 @@ import { auth, adminOnly } from "../middleware/auth";
 
 const router = Router();
 
+// Basic rate limiter for login to mitigate brute-force
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Auth routes
-router.post("/login", login);
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+router.post("/login", loginLimiter, validate(loginSchema), login);
 router.post("/logout", logout);
 router.get("/me", auth, getMe);
 

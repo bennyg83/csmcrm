@@ -424,21 +424,26 @@ async function seedDatabase() {
     await AppDataSource.initialize();
     console.log("✅ Database connected");
 
-    // Clear existing data using CASCADE to handle foreign key constraints
-    console.log("🗑️ Clearing existing data...");
-    await AppDataSource.query('TRUNCATE TABLE account_activities, health_scores, notes, tasks, contacts, accounts, account_tiers, users CASCADE');
+    // Clear existing data using CASCADE to handle foreign key constraints (do not touch users)
+    console.log("🗑️ Clearing existing non-user data...");
+    await AppDataSource.query('TRUNCATE TABLE account_activities, health_scores, notes, tasks, contacts, accounts, account_tiers CASCADE');
 
     // Create admin user
-    console.log("👤 Creating admin user...");
+    console.log("👤 Ensuring admin user exists...");
     const userRepository = AppDataSource.getRepository(User);
-    const adminUser = userRepository.create({
-      email: "admin@crm.com",
-      name: "Admin User",
-      password: "admin123",
-      role: "admin"
-    });
-    await userRepository.save(adminUser);
-    console.log("✅ Admin user created");
+    const existingAdmin = await userRepository.findOne({ where: { email: "admin@crm.com" } });
+    if (!existingAdmin) {
+      const adminUser = userRepository.create({
+        email: "admin@crm.com",
+        name: "Admin User",
+        password: "admin123",
+        legacyRole: "admin"
+      });
+      await userRepository.save(adminUser);
+      console.log("✅ Admin user created");
+    } else {
+      console.log("✅ Admin user already present");
+    }
 
     // Create account tiers
     console.log("🏷️ Creating account tiers...");

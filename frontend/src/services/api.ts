@@ -18,8 +18,35 @@ class ApiService {
   private api: AxiosInstance;
 
   constructor() {
+    const normalizeApiBase = (value: string | undefined): string => {
+      let v = (value || '').trim();
+      if (!v) v = '/api';
+      // Resolve relative URLs against current origin
+      if (!v.startsWith('http')) {
+        v = new URL(v, window.location.origin).toString();
+      }
+      // If localhost without port, default to 3000
+      try {
+        const u = new URL(v);
+        if ((u.hostname === 'localhost' || u.hostname === '127.0.0.1') && !u.port) {
+          u.port = '3000';
+          v = u.toString();
+        }
+      } catch {
+        // Fallback to sensible default
+        v = 'http://localhost:3000/api';
+      }
+      // Ensure '/api' suffix
+      if (!v.endsWith('/api')) {
+        v = v.replace(/\/+$/, '') + '/api';
+      }
+      return v;
+    };
+
+    const baseURL = normalizeApiBase(import.meta.env.VITE_API_URL as string | undefined);
+
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+      baseURL,
       headers: {
         'Content-Type': 'application/json',
       },

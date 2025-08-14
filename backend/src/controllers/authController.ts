@@ -5,6 +5,7 @@ import { User } from "../entities/User";
 import { AuthRequest } from "../middleware/auth";
 import { Not } from "typeorm";
 import bcrypt from "bcryptjs";
+import { SystemEmailService } from "../services/systemEmailService";
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -31,6 +32,12 @@ export const login = async (req: Request, res: Response) => {
       if (!isValidPassword) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
+    }
+
+    // Ensure JWT secret is configured
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not configured");
+      return res.status(500).json({ error: "Server misconfiguration" });
     }
 
     const token = jwt.sign(
@@ -158,16 +165,38 @@ export const createUser = async (req: Request, res: Response) => {
     user.isGoogleUser = false;
 
     // Set password (hash it if provided, otherwise generate temporary password)
+    let tempPassword: string | undefined;
     if (password) {
       user.password = await bcrypt.hash(password, 10);
     } else {
       // Generate temporary password
-      const tempPassword = Math.random().toString(36).slice(-8);
+      tempPassword = Math.random().toString(36).slice(-8);
       user.password = await bcrypt.hash(tempPassword, 10);
       console.log(`Temporary password for ${email}: ${tempPassword}`);
     }
 
     const savedUser = await userRepository.save(user);
+
+    // Send welcome email to new user
+    try {
+      const systemEmailService = new SystemEmailService();
+      const adminUser = req.user as User; // The admin creating the user
+      
+      await systemEmailService.sendWelcomeEmail({
+        userEmail: savedUser.email,
+        userName: savedUser.name,
+        tempPassword: password ? undefined : tempPassword, // Only include if temp password was generated
+        adminEmail: adminUser.email,
+        adminName: adminUser.name,
+        appUrl: process.env.FRONTEND_URL || 'http://localhost:5173'
+      });
+      
+      console.log(`Welcome email sent to ${savedUser.email}`);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail the user creation if email fails
+      // Just log the error and continue
+    }
 
     // Return user without password
     const { password: _, ...userWithoutPassword } = savedUser;

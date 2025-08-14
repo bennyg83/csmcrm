@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import compression from "compression";
 import { config } from "dotenv";
 import { AppDataSource } from "./config/data-source";
 
@@ -14,10 +15,16 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(helmet());
+app.use(compression());
+
+// CORS configuration driven by env var (comma separated origins)
+const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:5174,http://localhost:5177,http://localhost:3001")
+  .split(",")
+  .map(o => o.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: process.env.NODE_ENV === "production" 
-    ? ["https://yourdomain.com"] 
-    : ["http://localhost:5173", "http://localhost:5174", "http://localhost:5177", "http://localhost:3000"],
+  origin: corsOrigins,
   credentials: true
 }));
 app.use(morgan("combined"));
@@ -25,12 +32,12 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
-app.get("/health", (req, res) => {
+app.get("/health", (_req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
 // Test endpoint to verify seeded data (no authentication required)
-app.get("/api/test/data", async (req, res) => {
+app.get("/api/test/data", async (_req, res) => {
   try {
     const accountRepository = AppDataSource.getRepository("Account");
     const contactRepository = AppDataSource.getRepository("Contact");
@@ -92,6 +99,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/auth", googleAuthRoutes);
 app.use("/api/gmail", gmailRoutes);
 app.use("/api/accounts", accountRoutes);
+// Keep existing path structure: contacts nested under accounts
 app.use("/api/accounts", contactRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/notes", noteRoutes);
@@ -108,12 +116,14 @@ app.use("/api/rbac", rbacRoutes);
 app.use("/api/portal", portalRoutes);
 
 // Error handling middleware
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    error: "Something went wrong!",
-    message: process.env.NODE_ENV === "development" ? err.message : "Internal server error"
-  });
+  const status = err.status || 500;
+  const message = err.message || "Internal server error";
+  if (process.env.NODE_ENV !== "test") {
+    console.error("Unhandled error:", err);
+  }
+  res.status(status).json({ error: message });
 });
 
 // 404 handler

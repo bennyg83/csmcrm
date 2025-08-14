@@ -203,7 +203,7 @@ const AccountDetailPage: React.FC = () => {
             priority: 'Medium',
             dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
             assignedTo: ['Current User'], // This could be dynamic
-            assignedToClient: [`${contact.firstName} ${contact.lastName}`],
+            assignedToClient: [contact.id],
             accountId: account.id,
             accountName: account.name,
             subTasks: [],
@@ -566,6 +566,17 @@ const AccountDetailPage: React.FC = () => {
     return dueDate < now && task.status !== 'Completed';
   };
 
+  const resolveContactNames = (idsOrNames: string | string[] | undefined) => {
+    if (!idsOrNames) return '';
+    const arr = Array.isArray(idsOrNames) ? idsOrNames : [idsOrNames];
+    // Map IDs to names where possible; if not an ID match, use the value as-is (backward compatibility)
+    const names = arr.map((value) => {
+      const match = account?.contacts?.find((c) => c.id === value);
+      return match ? `${match.firstName} ${match.lastName}` : value;
+    });
+    return names.join(', ');
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -646,7 +657,7 @@ const AccountDetailPage: React.FC = () => {
             <Typography variant="body1"><b>Website:</b> {account.website || 'N/A'}</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 1 }}>
               Description
@@ -656,268 +667,267 @@ const AccountDetailPage: React.FC = () => {
               {account.description || 'No description provided.'}
             </Typography>
           </Paper>
-          {/* Account Tasks Section */}
-          <Paper sx={{ p: 3, mt: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
-                Account Tasks ({filteredTasks.length})
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <ToggleButtonGroup
-                  value={taskViewMode}
-                  exclusive
-                  onChange={(_, newMode) => newMode && setTaskViewMode(newMode)}
-                  size="small"
+        </Grid>
+      </Grid>
+
+      {/* Tasks Section - full width to match Notes width */}
+      <Box sx={{ mb: 4 }}>
+        <Paper sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">
+              Account Tasks ({filteredTasks.length})
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <ToggleButtonGroup
+                value={taskViewMode}
+                exclusive
+                onChange={(_, newMode) => newMode && setTaskViewMode(newMode)}
+                size="small"
+              >
+                <ToggleButton value="table">
+                  <ListIcon fontSize="small" />
+                </ToggleButton>
+                <ToggleButton value="kanban">
+                  <KanbanIcon fontSize="small" />
+                </ToggleButton>
+              </ToggleButtonGroup>
+              {canCreate('tasks') && (
+                <Button variant="contained" size="small" onClick={() => setShowCreateTask(true)}>
+                  Create Task
+                </Button>
+              )}
+            </Box>
+          </Box>
+
+          {/* Task Filters */}
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+              <TextField
+                size="small"
+                placeholder="Search tasks..."
+                value={taskSearch}
+                onChange={(e) => setTaskSearch(e.target.value)}
+                InputProps={{
+                  startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                }}
+                sx={{ minWidth: 200 }}
+              />
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  multiple
+                  value={taskStatusFilter}
+                  onChange={(e) => setTaskStatusFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  input={<OutlinedInput label="Status" />}
+                  renderValue={(selected) => (selected as string[]).join(', ')}
                 >
-                  <ToggleButton value="table">
-                    <ListIcon fontSize="small" />
-                  </ToggleButton>
-                  <ToggleButton value="kanban">
-                    <KanbanIcon fontSize="small" />
-                  </ToggleButton>
-                </ToggleButtonGroup>
-                             {canCreate('tasks') && (
-                  <Button variant="contained" size="small" onClick={() => setShowCreateTask(true)}>
-                    Create Task
-                  </Button>
-               )}
+                  {statusOptions.map((status) => (
+                    <MenuItem key={status} value={status}>
+                      <Checkbox checked={taskStatusFilter.indexOf(status) > -1} />
+                      <MuiListItemText primary={status} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Priority</InputLabel>
+                <Select
+                  multiple
+                  value={taskPriorityFilter}
+                  onChange={(e) => setTaskPriorityFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  input={<OutlinedInput label="Priority" />}
+                  renderValue={(selected) => (selected as string[]).join(', ')}
+                >
+                  {priorityOptions.map((priority) => (
+                    <MenuItem key={priority} value={priority}>
+                      <Checkbox checked={taskPriorityFilter.indexOf(priority) > -1} />
+                      <MuiListItemText primary={priority} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showCompletedTasks}
+                    onChange={(e) => setShowCompletedTasks(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label="Show Completed"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showOverdueTasks}
+                    onChange={(e) => setShowOverdueTasks(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label="Show Overdue"
+              />
             </Box>
+          </Box>
 
-            {/* Task Filters */}
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                <TextField
-                  size="small"
-                  placeholder="Search tasks..."
-                  value={taskSearch}
-                  onChange={(e) => setTaskSearch(e.target.value)}
-                  InputProps={{
-                    startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                  }}
-                  sx={{ minWidth: 200 }}
-                />
-                
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    multiple
-                    value={taskStatusFilter}
-                    onChange={(e) => setTaskStatusFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-                    input={<OutlinedInput label="Status" />}
-                    renderValue={(selected) => (selected as string[]).join(', ')}
-                  >
-                    {statusOptions.map((status) => (
-                      <MenuItem key={status} value={status}>
-                        <Checkbox checked={taskStatusFilter.indexOf(status) > -1} />
-                        <MuiListItemText primary={status} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <InputLabel>Priority</InputLabel>
-                  <Select
-                    multiple
-                    value={taskPriorityFilter}
-                    onChange={(e) => setTaskPriorityFilter(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-                    input={<OutlinedInput label="Priority" />}
-                    renderValue={(selected) => (selected as string[]).join(', ')}
-                  >
-                    {priorityOptions.map((priority) => (
-                      <MenuItem key={priority} value={priority}>
-                        <Checkbox checked={taskPriorityFilter.indexOf(priority) > -1} />
-                        <MuiListItemText primary={priority} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={showCompletedTasks}
-                      onChange={(e) => setShowCompletedTasks(e.target.checked)}
-                      size="small"
-                    />
-                  }
-                  label="Show Completed"
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={showOverdueTasks}
-                      onChange={(e) => setShowOverdueTasks(e.target.checked)}
-                      size="small"
-                    />
-                  }
-                  label="Show Overdue"
-                />
-              </Box>
-            </Box>
-
-            {/* Task Table/Kanban View */}
-            {taskViewMode === 'table' ? (
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Task</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Priority</TableCell>
-                      <TableCell>Due Date</TableCell>
-                      <TableCell>Assigned To</TableCell>
-                      <TableCell>Progress</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredTasks.length > 0 ? (
-                      filteredTasks.map((task) => (
-                        <TableRow key={task.id} hover>
-                          <TableCell>
-                  <Box>
-                    <Typography 
-                                variant="subtitle2" 
-                                sx={{ 
-                                  cursor: 'pointer',
-                                  '&:hover': { textDecoration: 'underline' },
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1
-                                }}
-                                onClick={() => handleEditTask(task)}
-                              >
-                                {isTaskOverdue(task) && (
-                                  <WarningIcon color="error" fontSize="small" />
-                                )}
-                                {task.title}
-                    </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {task.description.substring(0, 50)}...
+          {/* Task Table/Kanban View */}
+          {taskViewMode === 'table' ? (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Task</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Priority</TableCell>
+                    <TableCell>Due Date</TableCell>
+                    <TableCell>Assigned To</TableCell>
+                    <TableCell>Progress</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredTasks.length > 0 ? (
+                    filteredTasks.map((task) => (
+                      <TableRow key={task.id} hover>
+                        <TableCell>
+                          <Box>
+                            <Typography 
+                              variant="subtitle2" 
+                              sx={{ 
+                                cursor: 'pointer',
+                                '&:hover': { textDecoration: 'underline' },
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1
+                              }}
+                              onClick={() => handleEditTask(task)}
+                            >
+                              {isTaskOverdue(task) && (
+                                <WarningIcon color="error" fontSize="small" />
+                              )}
+                              {task.title}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {task.description.substring(0, 50)}...
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={task.status} 
+                            color={getStatusColor(task.status) as any}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={task.priority} 
+                            color={getPriorityColor(task.priority) as any}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color={isTaskOverdue(task) ? 'error' : 'inherit'}>
+                            {new Date(task.dueDate).toLocaleDateString()}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Box>
+                            {task.assignedTo && (
+                              <Typography variant="caption" color="primary">
+                                {Array.isArray(task.assignedTo) ? task.assignedTo.join(', ') : task.assignedTo}
                               </Typography>
-                  </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={task.status} 
-                              color={getStatusColor(task.status) as any}
-                              size="small"
+                            )}
+                            {task.assignedToClient && (
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                Client: {resolveContactNames(task.assignedToClient)}
+                              </Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={task.progress || 0} 
+                              sx={{ width: 60, height: 6 }}
                             />
-                          </TableCell>
-                          <TableCell>
+                            <Typography variant="caption">
+                              {task.progress || 0}%
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <IconButton size="small" onClick={() => handleEditTask(task)}>
+                            <PersonIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">
+                        <Typography variant="body2" color="text.secondary">
+                          No tasks found matching the current filters.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 2 }}>
+              {statusOptions.map((status) => (
+                <Paper key={status} sx={{ minWidth: 250, p: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    {status} ({filteredTasks.filter(t => t.status === status).length})
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {filteredTasks
+                      .filter(task => task.status === status)
+                      .map((task) => (
+                        <Card 
+                          key={task.id} 
+                          sx={{ 
+                            p: 2, 
+                            cursor: 'pointer',
+                            '&:hover': { boxShadow: 2 },
+                            borderLeft: isTaskOverdue(task) ? '4px solid red' : 'none'
+                          }}
+                          onClick={() => handleEditTask(task)}
+                        >
+                          <Typography variant="subtitle2" gutterBottom>
+                            {task.title}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" paragraph>
+                            {task.description.substring(0, 80)}...
+                          </Typography>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Chip 
                               label={task.priority} 
                               color={getPriorityColor(task.priority) as any}
                               size="small"
                             />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" color={isTaskOverdue(task) ? 'error' : 'inherit'}>
+                            <Typography variant="caption" color={isTaskOverdue(task) ? 'error' : 'text.secondary'}>
                               {new Date(task.dueDate).toLocaleDateString()}
                             </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Box>
-                              {task.assignedTo && (
-                                <Typography variant="caption" color="primary">
-                                  {Array.isArray(task.assignedTo) ? task.assignedTo.join(', ') : task.assignedTo}
-                                </Typography>
-                              )}
-                              {task.assignedToClient && (
-                                <Typography variant="caption" color="text.secondary" display="block">
-                                  Client: {Array.isArray(task.assignedToClient) ? task.assignedToClient.join(', ') : task.assignedToClient}
-                                </Typography>
-                              )}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <LinearProgress 
-                                variant="determinate" 
-                                value={task.progress || 0} 
-                                sx={{ width: 60, height: 6 }}
-                              />
-                              <Typography variant="caption">
-                                {task.progress || 0}%
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <IconButton size="small" onClick={() => handleEditTask(task)}>
-                              <PersonIcon fontSize="small" />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} align="center">
-                          <Typography variant="body2" color="text.secondary">
-                            No tasks found matching the current filters.
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            ) : (
-              // Kanban Board View
-              <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 2 }}>
-                {statusOptions.map((status) => (
-                  <Paper key={status} sx={{ minWidth: 250, p: 2 }}>
-                    <Typography variant="h6" gutterBottom>
-                      {status} ({filteredTasks.filter(t => t.status === status).length})
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      {filteredTasks
-                        .filter(task => task.status === status)
-                        .map((task) => (
-                          <Card 
-                            key={task.id} 
-                            sx={{ 
-                              p: 2, 
-                              cursor: 'pointer',
-                              '&:hover': { boxShadow: 2 },
-                              borderLeft: isTaskOverdue(task) ? '4px solid red' : 'none'
-                            }}
-                            onClick={() => handleEditTask(task)}
-                          >
-                            <Typography variant="subtitle2" gutterBottom>
-                              {task.title}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" paragraph>
-                              {task.description.substring(0, 80)}...
-                            </Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <Chip 
-                                label={task.priority} 
-                                color={getPriorityColor(task.priority) as any}
-                                size="small"
-                              />
-                              <Typography variant="caption" color={isTaskOverdue(task) ? 'error' : 'text.secondary'}>
-                                {new Date(task.dueDate).toLocaleDateString()}
-                              </Typography>
-                            </Box>
-                            <LinearProgress 
-                              variant="determinate" 
-                              value={task.progress || 0} 
-                              sx={{ mt: 1, height: 4 }}
-                            />
-                          </Card>
-                        ))}
-                    </Box>
-                  </Paper>
-                ))}
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
+                          </Box>
+                          <LinearProgress 
+                            variant="determinate" 
+                            value={task.progress || 0} 
+                            sx={{ mt: 1, height: 4 }}
+                          />
+                        </Card>
+                      ))}
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          )}
+        </Paper>
+      </Box>
 
       {/* Notes Section */}
       <Box sx={{ mb: 4 }}>
@@ -1123,11 +1133,11 @@ const AccountDetailPage: React.FC = () => {
                       <List dense>
                         {account.tasks && account.tasks.filter((t: Task) => {
                           const assignedClients = Array.isArray(t.assignedToClient) ? t.assignedToClient : t.assignedToClient ? [t.assignedToClient] : [];
-                          return assignedClients.includes(`${contact.firstName} ${contact.lastName}`);
+                          return assignedClients.includes(contact.id) || assignedClients.includes(`${contact.firstName} ${contact.lastName}`);
                         }).length > 0 ? (
                           account.tasks.filter((t: Task) => {
                             const assignedClients = Array.isArray(t.assignedToClient) ? t.assignedToClient : t.assignedToClient ? [t.assignedToClient] : [];
-                            return assignedClients.includes(`${contact.firstName} ${contact.lastName}`);
+                            return assignedClients.includes(contact.id) || assignedClients.includes(`${contact.firstName} ${contact.lastName}`);
                           }).map((task: Task) => (
                             <ListItem key={task.id} disableGutters secondaryAction={null}>
                               <Checkbox

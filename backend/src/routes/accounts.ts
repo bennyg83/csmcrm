@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { z } from "zod";
+import { validate } from "../middleware/validate";
 import {
   getAllAccounts,
   getAccountById,
@@ -25,8 +27,20 @@ router.get("/recent-activities", requirePermission("accounts.read"), getRecentAc
 router.get("/:id", requirePermission("accounts.read"), getAccountById);
 
 // Account routes - Write operations (require accounts.write permission)
-router.post("/", requirePermission("accounts.write"), createAccount);
-router.patch("/:id", requirePermission("accounts.write"), updateAccount);
+const createAccountSchema = z.object({
+  name: z.string().min(1),
+  status: z.string().optional(),
+  health: z.number().min(0).max(100).optional(),
+});
+
+const updateAccountSchema = z.object({
+  name: z.string().min(1).optional(),
+  status: z.string().optional(),
+  health: z.number().min(0).max(100).optional(),
+});
+
+router.post("/", requirePermission("accounts.write"), validate(createAccountSchema), createAccount);
+router.patch("/:id", requirePermission("accounts.write"), validate(updateAccountSchema), updateAccount);
 router.delete("/:id", requirePermission("accounts.write"), deleteAccount);
 
 // Bulk operations - Write operations (require accounts.write permission)

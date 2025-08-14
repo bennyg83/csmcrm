@@ -15,7 +15,9 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Divider
+  Divider,
+  TextField,
+  Autocomplete
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -30,6 +32,10 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { apiService } from '../services/api';
+import { Account, Contact, Task } from '../types';
+import { gmailService } from '../services/gmailService';
+import SearchIcon from '@mui/icons-material/Search';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -100,6 +106,77 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchInput, setSearchInput] = React.useState('');
+  const [searchOptions, setSearchOptions] = React.useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = React.useState(false);
+
+  const handleSearch = async (value: string) => {
+    setSearchInput(value);
+    if (!value || value.length < 2) {
+      setSearchOptions([]);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const [accounts, tasks, emails] = await Promise.all([
+        apiService.getAccounts(),
+        apiService.getTasks(),
+        gmailService.searchEmails(value, 5).catch(() => [])
+      ]);
+      const contacts: Contact[] = accounts.flatMap(a => a.contacts || []);
+      const q = value.toLowerCase();
+      const results: any[] = [];
+      accounts.forEach((a: Account) => {
+        if (
+          a.name.toLowerCase().includes(q) ||
+          a.email?.toLowerCase().includes(q)
+        ) {
+          results.push({ type: 'account', id: a.id, label: `Account: ${a.name}` });
+        }
+      });
+      contacts.forEach((c: Contact) => {
+        const name = `${c.firstName} ${c.lastName}`;
+        if (name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)) {
+          results.push({ type: 'contact', id: c.id, accountId: c.accountId, label: `Contact: ${name}` });
+        }
+      });
+      tasks.forEach((t: Task) => {
+        if (
+          t.title.toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q)
+        ) {
+          results.push({ type: 'task', id: t.id, accountId: t.accountId, label: `Task: ${t.title}` });
+        }
+      });
+      // Emails
+      (emails as any[]).forEach((e: any) => {
+        results.push({ type: 'email', id: e.id, label: `Email: ${e.subject || '(No Subject)'} from ${e.from?.email || ''}`, q: e.subject || e.from?.email || value });
+      });
+      setSearchOptions(results.slice(0, 20));
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleSearchSelect = (event: any, option: any) => {
+    if (!option) return;
+    switch (option.type) {
+      case 'account':
+        navigate(`/accounts/${option.id}`);
+        break;
+      case 'contact':
+        navigate(`/contacts/${option.id}`);
+        break;
+      case 'task':
+        navigate(`/tasks/${option.id}`);
+        break;
+      case 'email':
+        navigate(`/email?q=${encodeURIComponent(option.q || '')}`);
+        break;
+      default:
+        break;
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -129,7 +206,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             >
               CRM
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '50%' }}>
+              <Autocomplete
+                freeSolo
+                options={searchOptions}
+                getOptionLabel={(o) => (typeof o === 'string' ? o : o.label)}
+                loading={searchLoading}
+                onChange={handleSearchSelect}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    size="small"
+                    placeholder="Search accounts, contacts, tasks..."
+                    onChange={(e) => handleSearch(e.target.value)}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: <SearchIcon sx={{ mr: 1 }} />,
+                    }}
+                    sx={{ backgroundColor: 'white', borderRadius: 1, minWidth: 320 }}
+                  />
+                )}
+              />
               <Chip
                 label={user?.role === 'admin' ? 'Admin' : 'User'}
                 size="small"
