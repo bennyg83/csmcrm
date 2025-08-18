@@ -5,7 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.4.0] - 2025-01-20
+## [2.4.1-buggy] - 2025-08-18
+
+### 🚨 **KNOWN ISSUES**
+- **Client Portal Dashboard**: Shows internal server error due to `EntityPropertyNotFoundError: Property "notes" was not found in "Task"`
+- **Task Management**: External task endpoints fail due to entity relation issues
+- **Error Location**: `ExternalTaskController.getTaskDetails` method at line 112
+
+### ✅ **WORKING FUNCTIONALITY**
+- **Google SSO Authentication**: Fully functional without errors
+- **Internal User Login**: Working correctly
+- **Password Reset**: Available at `/client/password-reset` and functioning
+- **External User Portal**: Basic login and password reset working
+- **Core CRM Features**: Accounts, contacts, basic operations functional
+
+### 🔧 **TECHNICAL STATE**
+- **API Configuration**: Using direct `localhost:3000` connection (working)
+- **Database**: PostgreSQL running on port 5434, connected and functional
+- **Services**: Backend, frontend, and database all running successfully
+- **Version Rollback**: Successfully restored from broken entity relation fixes
+
+### 📝 **NOTES**
+- This version represents a stable state with core authentication working
+- Client portal dashboard functionality is limited due to entity relation errors
+- Version marked as "-buggy" to indicate known issues while preserving working functionality
+- Can be used as a restore point for future debugging attempts
+
+## [2.4.0] - 2025-08-14
 
 ### 🔧 Major Features Added
 
