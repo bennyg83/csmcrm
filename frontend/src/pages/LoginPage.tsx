@@ -45,11 +45,11 @@ const LoginPage: React.FC = () => {
     // Resolve API base URL to a full origin (with port) even if it's relative like "/api"
     const normalizeApiBase = (value: string): string => {
       let v = (value || '').trim();
-      if (!v) return 'http://localhost:3000/api';
+      if (!v) return 'http://localhost:3002/api';
       if (v.startsWith('http')) {
         // Fix invalid patterns like http://localhost:/api (missing port after colon)
         if (/^https?:\/\/[^/]+:\/?($|[^0-9])/.test(v)) {
-          v = v.replace(/^(https?:\/\/[^/]+):(?=\/|$)/, '$1:3000');
+          v = v.replace(/^(https?:\/\/[^/]+):(?=\/|$)/, '$1:3002');
         }
         return v;
       }

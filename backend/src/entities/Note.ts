@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
-  JoinColumn
+  ManyToMany,
+  JoinColumn,
+  JoinTable,
 } from "typeorm";
-import { MinLength, IsOptional } from "class-validator";
+import { MinLength } from "class-validator";
 
 @Entity("notes")
 export class Note {
@@ -16,10 +18,6 @@ export class Note {
 
   @Column()
   accountId!: string;
-
-  @Column({ nullable: true })
-  @IsOptional()
-  contactId?: string;
 
   @Column({ type: "text" })
   @MinLength(1)
@@ -31,7 +29,7 @@ export class Note {
   @Column({
     type: "enum",
     enum: ["general", "meeting", "call", "email"],
-    default: "general"
+    default: "general",
   })
   type!: "general" | "meeting" | "call" | "email";
 
@@ -51,7 +49,11 @@ export class Note {
   @JoinColumn({ name: "accountId" })
   account!: any;
 
-  @ManyToOne("Contact", "notes")
-  @JoinColumn({ name: "contactId" })
-  contact?: any;
+  @ManyToMany("Contact", "notes", { cascade: true })
+  @JoinTable({
+    name: "note_contacts",
+    joinColumn: { name: "noteId", referencedColumnName: "id" },
+    inverseJoinColumn: { name: "contactId", referencedColumnName: "id" },
+  })
+  contacts!: any[];
 } 

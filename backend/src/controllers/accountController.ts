@@ -26,7 +26,7 @@ export const getAccountById = async (req: Request, res: Response) => {
     
     const account = await accountRepository.findOne({
       where: { id },
-      relations: ["tier", "contacts", "tasks", "notes", "healthScores", "activities"]
+      relations: ["tier", "contacts", "tasks", "notes", "notes.contacts", "healthScores", "activities"]
     });
 
     if (!account) {

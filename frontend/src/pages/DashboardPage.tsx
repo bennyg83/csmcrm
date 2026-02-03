@@ -116,6 +116,7 @@ const DashboardPage: React.FC = () => {
   const [selectedSE, setSelectedSE] = useState('');
   const [selectedTier, setSelectedTier] = useState('');
   const [selectedHealth, setSelectedHealth] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
@@ -244,6 +245,13 @@ const DashboardPage: React.FC = () => {
       });
     }
 
+    // Filter by Status
+    if (selectedStatus) {
+      filteredAccounts = filteredAccounts.filter(account =>
+        account.status === selectedStatus
+      );
+    }
+
     // Filter by Team Members (users)
     if (selectedUsers.length > 0) {
       filteredAccounts = filteredAccounts.filter(account =>
@@ -277,7 +285,8 @@ const DashboardPage: React.FC = () => {
     icon, 
     color = 'primary', 
     subtitle = '',
-    trend = null 
+    trend = null,
+    onClick
   }: {
     title: string;
     value: string | number;
@@ -285,8 +294,20 @@ const DashboardPage: React.FC = () => {
     color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error';
     subtitle?: string;
     trend?: { value: number; positive: boolean } | null;
+    onClick?: () => void;
   }) => (
-    <Card sx={{ height: '100%' }}>
+    <Card 
+      sx={{ 
+        height: '100%',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': onClick ? {
+          transform: 'translateY(-4px)',
+          boxShadow: 4
+        } : {}
+      }}
+      onClick={onClick}
+    >
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Avatar 
@@ -351,7 +372,40 @@ const DashboardPage: React.FC = () => {
     if (type === 'SE') setSelectedSE('');
     if (type === 'Tier') setSelectedTier('');
     if (type === 'Health') setSelectedHealth('');
+    if (type === 'Status') setSelectedStatus('');
     if (type === 'User') setSelectedUsers(selectedUsers.filter((userId) => userId !== value));
+  };
+
+  // Handler for clicking metric cards
+  const handleMetricClick = (metricType: string) => {
+    switch (metricType) {
+      case 'totalAccounts':
+        // Navigate to accounts page with no filters (show all)
+        navigate('/accounts');
+        break;
+      case 'totalTasks':
+        // Navigate to tasks page
+        navigate('/tasks');
+        break;
+      case 'activeAccounts':
+        // Navigate to accounts page filtered by active status
+        navigate('/accounts?status=active');
+        break;
+      case 'atRiskAccounts':
+        // Navigate to accounts page filtered by at-risk status
+        navigate('/accounts?status=at-risk');
+        break;
+      case 'totalRevenue':
+        // Navigate to accounts page (could add sort by revenue later)
+        navigate('/accounts');
+        break;
+      case 'averageHealthScore':
+        // Navigate to accounts page filtered by healthy accounts
+        navigate('/accounts?health=Healthy');
+        break;
+      default:
+        break;
+    }
   };
 
   const openTaskDialog = () => {
@@ -469,6 +523,7 @@ const DashboardPage: React.FC = () => {
               icon={<BusinessIcon />}
               color="primary"
               subtitle="Active customers"
+              onClick={() => handleMetricClick('totalAccounts')}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
@@ -478,6 +533,7 @@ const DashboardPage: React.FC = () => {
               icon={<TaskIcon />}
               color="secondary"
               subtitle="Open items"
+              onClick={() => handleMetricClick('totalTasks')}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
@@ -487,6 +543,7 @@ const DashboardPage: React.FC = () => {
               icon={<TrendingUpIcon />}
               color="success"
               subtitle="Healthy customers"
+              onClick={() => handleMetricClick('activeAccounts')}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
@@ -496,6 +553,7 @@ const DashboardPage: React.FC = () => {
               icon={<WarningIcon />}
               color="warning"
               subtitle="Needs attention"
+              onClick={() => handleMetricClick('atRiskAccounts')}
             />
           </Grid>
         </Grid>
@@ -507,6 +565,7 @@ const DashboardPage: React.FC = () => {
               icon={<MoneyIcon />}
               color="success"
               subtitle="Annual recurring revenue"
+              onClick={() => handleMetricClick('totalRevenue')}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -516,6 +575,7 @@ const DashboardPage: React.FC = () => {
               icon={<HealthIcon />}
               color="primary"
               subtitle="Customer satisfaction"
+              onClick={() => handleMetricClick('averageHealthScore')}
             />
           </Grid>
         </Grid>
@@ -537,7 +597,22 @@ const DashboardPage: React.FC = () => {
                   <List sx={{ p: 0 }}>
                     {metrics.recentActivities.map((activity, index) => (
                       <React.Fragment key={activity.id}>
-                        <ListItem sx={{ px: 0, py: 1.5 }}>
+                        <ListItem 
+                          sx={{ 
+                            px: 0, 
+                            py: 1.5,
+                            cursor: 'pointer',
+                            '&:hover': {
+                              backgroundColor: 'action.hover'
+                            }
+                          }}
+                          onClick={() => {
+                            if (activity.accountId) {
+                              // Navigate to account detail page
+                              navigate(`/accounts/${activity.accountId}`);
+                            }
+                          }}
+                        >
                           <ListItemText
                             primary={
                               <Typography variant="body1" sx={{ fontWeight: 500 }}>
@@ -554,6 +629,21 @@ const DashboardPage: React.FC = () => {
                                     variant="outlined"
                                     sx={{ fontSize: '0.75rem' }}
                                   />
+                                  {activity.account && (
+                                    <Chip
+                                      label={activity.account.name}
+                                      size="small"
+                                      color="secondary"
+                                      variant="outlined"
+                                      sx={{ fontSize: '0.75rem', cursor: 'pointer' }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (activity.accountId) {
+                                          navigate(`/accounts/${activity.accountId}`);
+                                        }
+                                      }}
+                                    />
+                                  )}
                                   <Typography variant="caption" color="text.secondary">
                                     {new Date(activity.date).toLocaleDateString('en-US', {
                                       year: 'numeric',
@@ -642,6 +732,13 @@ const DashboardPage: React.FC = () => {
               <Chip
                 label={<span><b>Health:</b> {selectedHealth}</span>}
                 onDelete={() => setSelectedHealth('')}
+                color="primary"
+              />
+            )}
+            {selectedStatus && (
+              <Chip
+                label={<span><b>Status:</b> {selectedStatus === 'active' ? 'Active' : selectedStatus === 'at-risk' ? 'At Risk' : selectedStatus}</span>}
+                onDelete={() => setSelectedStatus('')}
                 color="primary"
               />
             )}

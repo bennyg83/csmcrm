@@ -73,6 +73,14 @@ export class Task {
 
   @Column({ nullable: true })
   @IsOptional()
+  projectId?: string;
+
+  @Column({ nullable: true })
+  @IsOptional()
+  milestoneId?: string;
+
+  @Column({ nullable: true })
+  @IsOptional()
   googleCalendarEventId?: string;
 
   @Column({ type: "int" })
@@ -93,6 +101,14 @@ export class Task {
   @ManyToOne("Category", "tasks")
   @JoinColumn({ name: "categoryId" })
   category!: any;
+
+  @ManyToOne("Project", "tasks")
+  @JoinColumn({ name: "projectId" })
+  project!: any;
+
+  @ManyToOne("Milestone", "tasks")
+  @JoinColumn({ name: "milestoneId" })
+  milestone!: any;
 
   @OneToMany("TaskComment", "task")
   comments!: any[];

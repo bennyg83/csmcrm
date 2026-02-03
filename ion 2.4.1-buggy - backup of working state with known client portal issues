@@ -1,0 +1,35 @@
+[33mcommit b081125374e55e6002f7678295096336a6a56641[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/develop/v2.5.0[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mdevelop/v2.5.0[m[33m)[m
+Author: CRM Admin <admin@crm.com>
+Date:   Thu Aug 14 21:23:46 2025 +0300
+
+    feat: version 2.4.0
+
+ CHANGELOG.md                                    |  42 [32m++[m
+ backend/env.example                             |   9 [32m+[m[31m-[m
+ backend/package.json                            |   8 [32m+[m[31m-[m
+ backend/src/controllers/authController.ts       |  31 [32m+[m[31m-[m
+ backend/src/controllers/googleAuthController.ts |   9 [32m+[m[31m-[m
+ backend/src/index.ts                            |  30 [32m+[m[31m-[m
+ backend/src/middleware/validate.ts              |  19 [32m+[m
+ backend/src/routes/accounts.ts                  |  18 [32m+[m[31m-[m
+ backend/src/routes/auth.ts                      |  18 [32m+[m[31m-[m
+ backend/src/routes/portal.ts                    |   4 [32m+[m[31m-[m
+ backend/src/scripts/comprehensive-seed.ts       |  29 [32m+[m[31m-[m
+ backend/src/scripts/promote-admins.ts           |  41 [32m++[m
+ backend/src/scripts/set-admin-password.ts       |  20 [32m+[m[31m-[m
+ backend/src/services/fallbackEmailService.ts    |  58 [32m+++[m
+ backend/src/services/systemEmailService.ts      | 186 [32m+++++++++[m
+ docker-compose.yml                              |  77 [32m++[m[31m--[m
+ frontend/package.json                           |   2 [32m+[m[31m-[m
+ frontend/src/components/Layout.tsx              | 101 [32m++++[m[31m-[m
+ frontend/src/components/TaskTable.tsx           | 221 [32m++++++++++[m
+ frontend/src/components/UserAutocomplete.tsx    |   5 [32m+[m
+ frontend/src/pages/AccountDetailPage.tsx        | 516 [32m++++++++++++[m[31m------------[m
+ frontend/src/pages/ContactDetailPage.tsx        | 157 [32m++++++[m[31m-[m
+ frontend/src/pages/IntegrationsPage.tsx         |  21 [32m+[m[31m-[m
+ frontend/src/pages/LoginPage.tsx                |  30 [32m+[m[31m-[m
+ frontend/src/services/api.ts                    |  29 [32m+[m[31m-[m
+ package.json                                    |   2 [32m+[m[31m-[m
+ start-dev.bat                                   |  51 [32m++[m[31m-[m
+ start-dev.ps1                                   |  61 [32m++[m[31m-[m
+ 28 files changed, 1427 insertions(+), 368 deletions(-)

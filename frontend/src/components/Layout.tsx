@@ -28,7 +28,8 @@ import {
   Person as PersonIcon,
   CalendarToday as CalendarIcon,
   Email as EmailIcon,
-  BarChart as ManagementIcon
+  BarChart as ManagementIcon,
+  FolderOpen as ProjectsIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -47,6 +48,7 @@ const navItems = [
   { path: '/', label: 'Dashboard', icon: <DashboardIcon /> },
   { path: '/management', label: 'Management', icon: <ManagementIcon />, management: true },
   { path: '/accounts', label: 'Accounts', icon: <BusinessIcon /> },
+  { path: '/projects', label: 'Projects', icon: <ProjectsIcon /> },
   { path: '/tasks', label: 'Tasks', icon: <TaskIcon /> },
   { path: '/calendar', label: 'Calendar', icon: <CalendarIcon /> },
   { path: '/email', label: 'Email', icon: <EmailIcon /> },

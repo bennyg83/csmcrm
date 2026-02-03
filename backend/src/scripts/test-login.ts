@@ -42,7 +42,7 @@ async function testLogin() {
 
     console.log("\n=== TEST API CALL ===");
     console.log("You can test this token with:");
-    console.log(`curl -H "Authorization: Bearer ${token}" http://localhost:3000/api/auth/me`);
+    console.log(`curl -H "Authorization: Bearer ${token}" http://localhost:3002/api/auth/me`);
 
     process.exit(0);
   } catch (error) {

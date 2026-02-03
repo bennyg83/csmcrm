@@ -135,10 +135,10 @@ const IntegrationsPage: React.FC = () => {
         // Redirect to backend OAuth endpoint (same logic as LoginPage)
         const normalizeApiBase = (value: string): string => {
           let v = (value || '').trim();
-          if (!v) return 'http://localhost:3000/api';
+          if (!v) return 'http://localhost:3002/api';
           if (v.startsWith('http')) {
             if (/^https?:\/\/[^/]+:\/?($|[^0-9])/.test(v)) {
-              v = v.replace(/^(https?:\/\/[^/]+):(?=\/|$)/, '$1:3000');
+              v = v.replace(/^(https?:\/\/[^/]+):(?=\/|$)/, '$1:3002');
             }
             return v;
           }

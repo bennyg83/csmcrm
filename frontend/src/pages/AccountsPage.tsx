@@ -41,7 +41,7 @@ import {
   Circle as CircleIcon,
   Search as SearchIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Account } from '../types';
 import OnboardingQuestionnaire from '../components/OnboardingQuestionnaire';
@@ -68,11 +68,13 @@ const AccountsPage: React.FC = () => {
   const { canCreate, canWrite } = usePermissions();
 
   // Filter state
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCSMs, setSelectedCSMs] = useState<string[]>([]);
   const [selectedAM, setSelectedAM] = useState('');
   const [selectedSE, setSelectedSE] = useState('');
   const [selectedTier, setSelectedTier] = useState('');
   const [selectedHealth, setSelectedHealth] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
 
   // Bulk operations state
   const [showBulkOperations, setShowBulkOperations] = useState(false);
@@ -105,6 +107,19 @@ const AccountsPage: React.FC = () => {
     fetchAccounts();
     fetchAccountTiers();
   }, []);
+
+  // Read URL parameters and apply filters on mount
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    const healthParam = searchParams.get('health');
+    
+    if (statusParam) {
+      setSelectedStatus(statusParam);
+    }
+    if (healthParam) {
+      setSelectedHealth(healthParam);
+    }
+  }, [searchParams]);
 
   // Filter accounts based on search and selected filters
   const filteredAccounts = accounts.filter(account => {
@@ -142,9 +157,14 @@ const AccountsPage: React.FC = () => {
     // Health filter
     if (selectedHealth) {
       const health = account.health;
-      if (selectedHealth === 'Healthy' && health < 80) return false;
-      if (selectedHealth === 'At Risk' && (health >= 80 || health < 60)) return false;
-      if (selectedHealth === 'Critical' && health >= 60) return false;
+      if (selectedHealth === 'Healthy' && health < 70) return false;
+      if (selectedHealth === 'At Risk' && (health >= 70 || health < 40)) return false;
+      if (selectedHealth === 'Critical' && health >= 40) return false;
+    }
+    
+    // Status filter
+    if (selectedStatus && account.status !== selectedStatus) {
+      return false;
     }
     
     return true;
@@ -405,7 +425,17 @@ const AccountsPage: React.FC = () => {
             <InputLabel>Health</InputLabel>
             <Select
               value={selectedHealth}
-              onChange={e => setSelectedHealth(e.target.value)}
+              onChange={e => {
+                setSelectedHealth(e.target.value);
+                // Update URL parameter
+                const newParams = new URLSearchParams(searchParams);
+                if (e.target.value) {
+                  newParams.set('health', e.target.value);
+                } else {
+                  newParams.delete('health');
+                }
+                setSearchParams(newParams);
+              }}
               label="Health"
             >
               <MenuItem value=""><em>None</em></MenuItem>
@@ -414,7 +444,61 @@ const AccountsPage: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+          <FormControl sx={{ minWidth: 120 }} size="small">
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={selectedStatus}
+              onChange={e => {
+                setSelectedStatus(e.target.value);
+                // Update URL parameter
+                const newParams = new URLSearchParams(searchParams);
+                if (e.target.value) {
+                  newParams.set('status', e.target.value);
+                } else {
+                  newParams.delete('status');
+                }
+                setSearchParams(newParams);
+              }}
+              label="Status"
+            >
+              <MenuItem value=""><em>All</em></MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="at-risk">At Risk</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
+        {/* Active Filter Chips */}
+        {(selectedStatus || selectedHealth) && (
+          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {selectedStatus && (
+              <Chip
+                label={`Status: ${selectedStatus === 'active' ? 'Active' : selectedStatus === 'at-risk' ? 'At Risk' : selectedStatus}`}
+                onDelete={() => {
+                  setSelectedStatus('');
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.delete('status');
+                  setSearchParams(newParams);
+                }}
+                color="primary"
+                size="small"
+              />
+            )}
+            {selectedHealth && (
+              <Chip
+                label={`Health: ${selectedHealth}`}
+                onDelete={() => {
+                  setSelectedHealth('');
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.delete('health');
+                  setSearchParams(newParams);
+                }}
+                color="primary"
+                size="small"
+              />
+            )}
+          </Box>
+        )}
       </Box>
 
       {/* Results Summary */}

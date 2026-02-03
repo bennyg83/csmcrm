@@ -60,6 +60,8 @@ A modern Customer Relationship Management (CRM) system built with React, TypeScr
 - **Docker Compose** for multi-container orchestration
 - **PostgreSQL 15** as the database
 
+**Connectivity:** This CRM uses its own database and ports. For GitHub Pages frontends and Tailscale routing (one Tailscale install for two projects/frontends), see **TAILSCALE.md**. Port segregation is documented in **PORTS.md**. To host the frontend on GitHub Pages, see **GITHUB_PAGES.md**.
+
 ## 📋 Prerequisites
 
 Before running this project, make sure you have the following installed:
@@ -74,8 +76,8 @@ Before running this project, make sure you have the following installed:
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
-   cd crm-2
+   git clone https://github.com/bennyg83/csmcrm.git
+   cd csmcrm
    ```
 
 2. **Start the development environment**
@@ -89,7 +91,7 @@ Before running this project, make sure you have the following installed:
 
 3. **Access the application**
    - Frontend: http://localhost:5173
-   - Backend API: http://localhost:3000
+   - Backend API: http://localhost:3002 (default; port 3000 not used)
    - Database: localhost:5432
 
 ### Local Development
@@ -173,7 +175,7 @@ JWT_SECRET=your-super-secret-jwt-key-change-in-production
 
 #### Frontend (.env)
 ```env
-VITE_API_URL=http://localhost:3000/api
+VITE_API_URL=http://localhost:3002/api
 ```
 
 ### Database Setup

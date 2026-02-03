@@ -43,6 +43,7 @@ import {
 } from '@mui/icons-material';
 import { apiService } from '../services/api';
 import { Task, Account, User } from '../types';
+import { EntityFiles } from '../components/EntityFiles';
 
 const TaskDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -331,6 +332,13 @@ const TaskDetailPage: React.FC = () => {
                 </Button>
               </CardContent>
             </Card>
+          )}
+
+          {/* Files */}
+          {id && (
+            <Box sx={{ mb: 3 }}>
+              <EntityFiles entityType="task" entityId={id} title="Files" />
+            </Box>
           )}
 
           {/* Task Metadata */}

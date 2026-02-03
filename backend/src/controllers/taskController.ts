@@ -8,11 +8,32 @@ import { AuthRequest } from "../middleware/auth";
 export const getAllTasks = async (req: Request, res: Response) => {
   try {
     const taskRepository = AppDataSource.getRepository(Task);
-    const tasks = await taskRepository.find({
-      relations: ["account"],
-      order: { createdAt: "DESC" }
-    });
+    const projectId = req.query.projectId as string | undefined;
+    const milestoneId = req.query.milestoneId as string | undefined;
+    const tagsParam = req.query.tags as string | undefined; // comma-separated
 
+    const qb = taskRepository.createQueryBuilder("task");
+    qb.leftJoinAndSelect("task.account", "account");
+    qb.leftJoinAndSelect("task.project", "project");
+    qb.leftJoinAndSelect("task.milestone", "milestone");
+    qb.orderBy("task.createdAt", "DESC");
+
+    if (projectId) {
+      qb.andWhere("task.projectId = :projectId", { projectId });
+    }
+    if (milestoneId) {
+      qb.andWhere("task.milestoneId = :milestoneId", { milestoneId });
+    }
+    if (tagsParam && tagsParam.trim()) {
+      const tagList = tagsParam.split(",").map((t) => t.trim()).filter(Boolean);
+      for (const tag of tagList) {
+        qb.andWhere("(task.tags::jsonb @> :tagJson)", {
+          tagJson: JSON.stringify([tag]),
+        });
+      }
+    }
+
+    const tasks = await qb.getMany();
     res.json(tasks);
   } catch (error) {
     console.error("Get all tasks error:", error);
@@ -27,7 +48,7 @@ export const getTaskById = async (req: Request, res: Response) => {
     
     const task = await taskRepository.findOne({
       where: { id },
-      relations: ["account"]
+      relations: ["account", "project", "milestone"]
     });
 
     if (!task) {
@@ -49,7 +70,9 @@ export const createTask = async (req: AuthRequest, res: Response) => {
     const taskData = {
       ...req.body,
       accountId: req.body.accountId || null,
-      categoryId: req.body.categoryId || null
+      categoryId: req.body.categoryId || null,
+      projectId: req.body.projectId || null,
+      milestoneId: req.body.milestoneId || null,
     };
     
     // Store the createCalendarEvent flag before removing it from taskData

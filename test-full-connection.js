@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = 'http://localhost:3002';
 const FRONTEND_URL = 'http://localhost:5174';
 
 async function testFullConnection() {
@@ -58,7 +58,7 @@ async function testFullConnection() {
 
     console.log('\n🎉 ALL TESTS PASSED!');
     console.log('\n📊 Connection Summary:');
-    console.log('   • Backend: ✅ Running on http://localhost:3000');
+    console.log('   • Backend: ✅ Running on http://localhost:3002');
     console.log('   • Frontend: ✅ Running on http://localhost:5173');
     console.log('   • Database: ✅ Connected and seeded');
     console.log('   • Authentication: ✅ JWT working');
@@ -79,7 +79,7 @@ async function testFullConnection() {
       console.log('   • Backend: cd backend && npm run dev');
       console.log('   • Frontend: cd frontend && npm run dev');
       console.log('2. Check if ports are available:');
-      console.log('   • Backend port 3000');
+      console.log('   • Backend port 3002');
       console.log('   • Frontend port 5173');
     } else if (error.response?.status === 401) {
       console.log('\n🔧 Authentication issue:');

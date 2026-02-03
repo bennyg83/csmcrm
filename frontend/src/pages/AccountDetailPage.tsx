@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Typography, Box, CircularProgress, Alert, Chip, Grid, Paper, Divider, Card, CardContent, Avatar, Button, List, ListItem, ListItemText, Checkbox, TextField, IconButton, Menu, MenuItem, FormControl, InputLabel, Select, OutlinedInput, ListItemText as MuiListItemText, Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, LinearProgress, Switch, FormControlLabel, ToggleButton, ToggleButtonGroup } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { Typography, Box, CircularProgress, Alert, Chip, Grid, Paper, Divider, Card, CardContent, Avatar, Button, List, ListItem, ListItemText, Checkbox, TextField, IconButton, Menu, MenuItem, FormControl, InputLabel, Select, OutlinedInput, ListItemText as MuiListItemText, Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, LinearProgress, Switch, FormControlLabel, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
+import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Account, Contact, Task } from '../types';
 import EmailIcon from '@mui/icons-material/Email';
@@ -19,10 +19,13 @@ import {
   ViewKanban as KanbanIcon,
   ViewList as ListIcon,
   Search as SearchIcon,
-  Warning as WarningIcon
+  Warning as WarningIcon,
+  FolderOpen as FolderOpenIcon
 } from '@mui/icons-material';
 import UserAutocomplete from '../components/UserAutocomplete';
+import { EntityFiles } from '../components/EntityFiles';
 import { usePermissions } from '../utils/rbac';
+import { useAuth } from '../contexts/AuthContext';
 
 const CONTACT_TYPE_OPTIONS = [
   'DM',
@@ -40,6 +43,66 @@ interface NoteHistory {
   timestamp: string;
   version: number;
 }
+
+const PROJECT_TYPES: Record<string, string> = {
+  Onboarding: 'Onboarding',
+  Expansion: 'Expansion',
+  POV_POC: 'POV/POC',
+  Risk: 'Risk',
+  Adoption: 'Adoption',
+};
+
+const AccountProjectsSection: React.FC<{ accountId: string }> = ({ accountId }) => {
+  const navigate = useNavigate();
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    apiService.getProjects(accountId).then((data) => {
+      if (!cancelled) setProjects(data);
+    }).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [accountId]);
+  return (
+    <Paper sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">Projects ({projects.length})</Typography>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<FolderOpenIcon />}
+          onClick={() => navigate('/projects/new', { state: { accountId } })}
+        >
+          New project
+        </Button>
+      </Box>
+      {loading ? (
+        <Box display="flex" justifyContent="center" py={2}><CircularProgress size={32} /></Box>
+      ) : projects.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">No projects yet. Create one to track onboarding, expansions, POV/POC, risk, or adoption.</Typography>
+      ) : (
+        <List dense disablePadding>
+          {projects.map((p: any) => (
+            <ListItem
+              key={p.id}
+              divider
+              sx={{ cursor: 'pointer' }}
+              onClick={() => navigate(`/projects/${p.id}`)}
+              secondaryAction={
+                <Box component="span" sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                  <Chip size="small" label={PROJECT_TYPES[p.type] || p.type} />
+                  <Chip size="small" label={p.status} variant="outlined" />
+                </Box>
+              }
+            >
+              <ListItemText primary={p.name} secondary={p.description ? p.description.slice(0, 60) + (p.description.length > 60 ? '...' : '') : ''} />
+            </ListItem>
+          ))}
+        </List>
+      )}
+    </Paper>
+  );
+};
 
 const AccountDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -68,6 +131,7 @@ const AccountDetailPage: React.FC = () => {
   const [showEditTask, setShowEditTask] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editTaskForm, setEditTaskForm] = useState<Partial<Task>>({});
+  const [externalUserStatuses, setExternalUserStatuses] = useState<{ [contactId: string]: { hasExternalUser: boolean; status?: string; role?: string } }>({});
 
   // Task table filter states
   const [taskViewMode, setTaskViewMode] = useState<'table' | 'kanban'>('table');
@@ -76,6 +140,13 @@ const AccountDetailPage: React.FC = () => {
   const [taskPriorityFilter, setTaskPriorityFilter] = useState<string[]>([]);
   const [showCompletedTasks, setShowCompletedTasks] = useState(true);
   const [showOverdueTasks, setShowOverdueTasks] = useState(true);
+
+  // Structured notes (linked to contacts)
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+  const [noteForm, setNoteForm] = useState({ content: '', type: 'general' as const, contactIds: [] as string[] });
+  const [noteSaving, setNoteSaving] = useState(false);
+
+  const { user } = useAuth();
 
   // Quill editor configuration
   const quillModules = {
@@ -115,6 +186,25 @@ const AccountDetailPage: React.FC = () => {
           const savedHistory = localStorage.getItem(`account-notes-history-${id}`);
           if (savedHistory) {
             setNoteHistory(JSON.parse(savedHistory));
+          }
+          
+          // Load external user statuses for contacts
+          try {
+            const externalUsers = await apiService.getExternalUsers(id);
+            const statuses: { [contactId: string]: { hasExternalUser: boolean; status?: string; role?: string } } = {};
+            if (data.contacts) {
+              data.contacts.forEach((contact: Contact) => {
+                const externalUser = externalUsers.find((eu: any) => eu.contactId === contact.id);
+                statuses[contact.id] = {
+                  hasExternalUser: !!externalUser,
+                  status: externalUser?.status,
+                  role: externalUser?.role
+                };
+              });
+            }
+            setExternalUserStatuses(statuses);
+          } catch (error) {
+            console.log('Could not load external user statuses:', error);
           }
         }
       } catch (err) {
@@ -185,6 +275,34 @@ const AccountDetailPage: React.FC = () => {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+  };
+
+  const handleOpenNoteDialog = () => {
+    setNoteForm({ content: '', type: 'general', contactIds: [] });
+    setNoteDialogOpen(true);
+  };
+
+  const handleSaveStructuredNote = async () => {
+    if (!account?.id || !noteForm.content.trim()) return;
+    setNoteSaving(true);
+    try {
+      await apiService.createNote(account.id, {
+        content: noteForm.content.trim(),
+        author: user?.name || 'User',
+        type: noteForm.type,
+        tags: [],
+        isPrivate: false,
+        contactIds: noteForm.contactIds,
+      });
+      const updatedAccount = await apiService.getAccount(account.id);
+      setAccount(updatedAccount);
+      setNoteDialogOpen(false);
+    } catch (err) {
+      console.error('Failed to create note:', err);
+      alert('Failed to create note');
+    } finally {
+      setNoteSaving(false);
+    }
   };
 
   const handleTaskInputChange = (contactId: string, value: string) => {
@@ -670,6 +788,20 @@ const AccountDetailPage: React.FC = () => {
         </Grid>
       </Grid>
 
+      {/* Files */}
+      {id && (
+        <Box sx={{ mb: 3 }}>
+          <EntityFiles entityType="account" entityId={id} showVisibleToChildrenOption title="Files" />
+        </Box>
+      )}
+
+      {/* Projects Section */}
+      {id && (
+        <Box sx={{ mb: 4 }}>
+          <AccountProjectsSection accountId={id} />
+        </Box>
+      )}
+
       {/* Tasks Section - full width to match Notes width */}
       <Box sx={{ mb: 4 }}>
         <Paper sx={{ p: 3 }}>
@@ -1024,6 +1156,104 @@ const AccountDetailPage: React.FC = () => {
         </Paper>
       </Box>
 
+      {/* Notes linked to contacts (structured notes) */}
+      {account && (
+        <Box sx={{ mb: 4 }}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6">Notes linked to contacts</Typography>
+              <Button size="small" variant="outlined" onClick={handleOpenNoteDialog}>
+                Add note
+              </Button>
+            </Box>
+            {account.notes && account.notes.length > 0 ? (
+              <List dense disablePadding>
+                {(account.notes as any[]).map((note: any) => (
+                  <ListItem key={note.id} divider>
+                    <ListItemText
+                      primary={note.content?.slice(0, 120) + (note.content?.length > 120 ? '...' : '')}
+                      secondary={
+                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
+                          <Typography variant="caption" color="text.secondary">
+                            {note.type} · {note.author} · {new Date(note.createdAt).toLocaleDateString()}
+                          </Typography>
+                          {note.contacts?.length > 0 && (
+                            <>
+                              {note.contacts.map((c: Contact) => (
+                                <Chip key={c.id} size="small" label={`${c.firstName} ${c.lastName}`} variant="outlined" />
+                              ))}
+                            </>
+                          )}
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body2" color="text.secondary">No notes linked to contacts yet. Add a note and optionally link it to one or more contacts.</Typography>
+            )}
+          </Paper>
+        </Box>
+      )}
+
+      <Dialog open={noteDialogOpen} onClose={() => setNoteDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Add note</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Content"
+            multiline
+            rows={4}
+            value={noteForm.content}
+            onChange={(e) => setNoteForm((f) => ({ ...f, content: e.target.value }))}
+            sx={{ mt: 1 }}
+          />
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Type</InputLabel>
+            <Select
+              value={noteForm.type}
+              label="Type"
+              onChange={(e) => setNoteForm((f) => ({ ...f, type: e.target.value as 'general' | 'meeting' | 'call' | 'email' }))}
+            >
+              <MenuItem value="general">General</MenuItem>
+              <MenuItem value="meeting">Meeting</MenuItem>
+              <MenuItem value="call">Call</MenuItem>
+              <MenuItem value="email">Email</MenuItem>
+            </Select>
+          </FormControl>
+          {account?.contacts && account.contacts.length > 0 && (
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Link to contacts (optional)</InputLabel>
+              <Select
+                multiple
+                value={noteForm.contactIds}
+                label="Link to contacts (optional)"
+                onChange={(e) => setNoteForm((f) => ({ ...f, contactIds: e.target.value as string[] }))}
+                input={<OutlinedInput label="Link to contacts (optional)" />}
+                renderValue={(selected) => (selected as string[]).map((cid) => {
+                  const c = account.contacts?.find((x: Contact) => x.id === cid);
+                  return c ? `${c.firstName} ${c.lastName}` : cid;
+                }).join(', ')}
+              >
+                {account.contacts.map((c: Contact) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    <Checkbox checked={noteForm.contactIds.indexOf(c.id) > -1} />
+                    <ListItemText primary={`${c.firstName} ${c.lastName}`} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setNoteDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSaveStructuredNote} disabled={!noteForm.content.trim() || noteSaving}>
+            {noteSaving ? 'Saving...' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Contact Cards Section */}
       <Box sx={{ mt: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -1056,11 +1286,22 @@ const AccountDetailPage: React.FC = () => {
                             </Button>
                           </Typography>
                           <Typography variant="body2" color="text.secondary">{contact.title || ''}</Typography>
-                          {contact.isPrimary && (
-                            <Box sx={{ mt: 0.5 }}>
+                          <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                            {contact.isPrimary && (
                               <Chip label="Primary" color="primary" size="small" />
-                            </Box>
-                          )}
+                            )}
+                            {externalUserStatuses[contact.id]?.hasExternalUser && (
+                              <Tooltip title={`Status: ${externalUserStatuses[contact.id]?.status}, Role: ${externalUserStatuses[contact.id]?.role}`}>
+                                <Chip 
+                                  label="External User" 
+                                  color="success" 
+                                  size="small" 
+                                  variant="outlined"
+                                  icon={<PersonIcon />}
+                                />
+                              </Tooltip>
+                            )}
+                          </Box>
                         </Box>
                         <IconButton onClick={(e) => handleMenuOpen(contact.id, e)}>
                           <MoreVertIcon />

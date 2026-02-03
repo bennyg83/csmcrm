@@ -44,7 +44,7 @@ docker-compose logs -f
 The Docker setup includes:
 
 - **PostgreSQL Database** (port 5432)
-- **Backend API** (port 3000)
+- **Backend API** (port 3002)
 - **Frontend React App** (port 5173)
 - **Automatic hot reload** for both frontend and backend
 - **Persistent database** data
@@ -57,8 +57,8 @@ The Docker setup includes:
 - **Volume Mounts**: Source code changes reflect immediately
 
 ### Backend (Node.js + Express)
-- **URL**: http://localhost:3000
-- **API**: http://localhost:3000/api
+- **URL**: http://localhost:3002
+- **API**: http://localhost:3002/api
 - **Hot Reload**: ✅ Enabled with nodemon
 - **Database**: Connected to PostgreSQL container
 
@@ -79,7 +79,7 @@ The Docker setup includes:
 
 2. **Access the application**:
    - Frontend: http://localhost:5173
-   - Backend API: http://localhost:3000/api
+   - Backend API: http://localhost:3002/api
    - Database: localhost:5432
 
 3. **Make changes**:
@@ -100,7 +100,7 @@ If you get port conflicts:
 docker-compose down
 
 # Check what's using the ports
-netstat -ano | findstr :3000
+netstat -ano | findstr :3002
 netstat -ano | findstr :5173
 netstat -ano | findstr :5432
 

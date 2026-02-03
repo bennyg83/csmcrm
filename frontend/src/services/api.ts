@@ -18,32 +18,8 @@ class ApiService {
   private api: AxiosInstance;
 
   constructor() {
-    const normalizeApiBase = (value: string | undefined): string => {
-      let v = (value || '').trim();
-      if (!v) v = '/api';
-      // Resolve relative URLs against current origin
-      if (!v.startsWith('http')) {
-        v = new URL(v, window.location.origin).toString();
-      }
-      // If localhost without port, default to 3000
-      try {
-        const u = new URL(v);
-        if ((u.hostname === 'localhost' || u.hostname === '127.0.0.1') && !u.port) {
-          u.port = '3000';
-          v = u.toString();
-        }
-      } catch {
-        // Fallback to sensible default
-        v = 'http://localhost:3000/api';
-      }
-      // Ensure '/api' suffix
-      if (!v.endsWith('/api')) {
-        v = v.replace(/\/+$/, '') + '/api';
-      }
-      return v;
-    };
-
-    const baseURL = normalizeApiBase(import.meta.env.VITE_API_URL as string | undefined);
+    // When served by backend (production bundle), use same-origin /api; otherwise dev backend URL
+    const baseURL = (import.meta.env.VITE_API_URL ?? '').trim() || 'http://localhost:3002/api';
 
     this.api = axios.create({
       baseURL,
@@ -78,8 +54,9 @@ class ApiService {
   }
 
   // Authentication
-  async login(email: string, password: string): Promise<LoginResponse> {
-    const response: AxiosResponse<LoginResponse> = await this.api.post('/auth/login', {
+  async login(email: string, password: string, type: 'internal' | 'external' = 'internal'): Promise<LoginResponse> {
+    const endpoint = type === 'external' ? '/external/auth/login' : '/auth/login';
+    const response: AxiosResponse<LoginResponse> = await this.api.post(endpoint, {
       email,
       password
     });
@@ -88,6 +65,12 @@ class ApiService {
 
   async logout(): Promise<void> {
     await this.api.post('/auth/logout');
+  }
+
+  // Generic GET method for direct API calls
+  async get(endpoint: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get(endpoint);
+    return response;
   }
 
   async getMe(): Promise<User> {
@@ -182,6 +165,66 @@ class ApiService {
     return response.data;
   }
 
+  // Projects (workflow / PM module)
+  async getProjects(accountId?: string): Promise<any[]> {
+    const url = accountId ? `/projects?accountId=${accountId}` : '/projects';
+    const response: AxiosResponse<any[]> = await this.api.get(url);
+    return response.data;
+  }
+
+  async getProject(id: string): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get(`/projects/${id}`);
+    return response.data;
+  }
+
+  async createProject(data: { accountId: string; type: string; name: string; description?: string; status?: string; startDate?: string; targetDate?: string }): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post('/projects', data);
+    return response.data;
+  }
+
+  async updateProject(id: string, data: Partial<{ name: string; description: string; status: string; startDate: string; targetDate: string }>): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.patch(`/projects/${id}`, data);
+    return response.data;
+  }
+
+  async deleteProject(id: string): Promise<void> {
+    await this.api.delete(`/projects/${id}`);
+  }
+
+  async getProjectMilestones(projectId: string): Promise<any[]> {
+    const response: AxiosResponse<any[]> = await this.api.get(`/projects/${projectId}/milestones`);
+    return response.data;
+  }
+
+  async createMilestone(projectId: string, data: { name: string; deliverable?: string; dueDate: string; status?: string; sortOrder?: number }): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post(`/projects/${projectId}/milestones`, data);
+    return response.data;
+  }
+
+  async updateMilestone(id: string, data: Partial<{ name: string; deliverable: string; dueDate: string; status: string; sortOrder: number }>): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.patch(`/milestones/${id}`, data);
+    return response.data;
+  }
+
+  async deleteMilestone(id: string): Promise<void> {
+    await this.api.delete(`/milestones/${id}`);
+  }
+
+  async getProjectContacts(projectId: string): Promise<any[]> {
+    const response: AxiosResponse<any[]> = await this.api.get(`/projects/${projectId}/contacts`);
+    return response.data;
+  }
+
+  async getProjectContactsByContact(contactId: string): Promise<any[]> {
+    const response: AxiosResponse<any[]> = await this.api.get('/project-contacts', { params: { contactId } });
+    return response.data;
+  }
+
+  async addProjectContact(projectId: string, data: { contactId?: string; userId?: string; role?: string; notes?: string }): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.post(`/projects/${projectId}/contacts`, data);
+    return response.data;
+  }
+
   // Contacts
   async getContacts(accountId: string): Promise<Contact[]> {
     const response: AxiosResponse<Contact[]> = await this.api.get(`/accounts/${accountId}/contacts`);
@@ -208,8 +251,13 @@ class ApiService {
   }
 
   // Tasks
-  async getTasks(): Promise<Task[]> {
-    const response: AxiosResponse<Task[]> = await this.api.get('/tasks');
+  async getTasks(params?: { projectId?: string; milestoneId?: string; tags?: string }): Promise<Task[]> {
+    const sp = new URLSearchParams();
+    if (params?.projectId) sp.set('projectId', params.projectId);
+    if (params?.milestoneId) sp.set('milestoneId', params.milestoneId);
+    if (params?.tags) sp.set('tags', params.tags);
+    const q = sp.toString();
+    const response: AxiosResponse<Task[]> = await this.api.get(q ? `/tasks?${q}` : '/tasks');
     return response.data;
   }
 
@@ -230,6 +278,40 @@ class ApiService {
 
   async deleteTask(id: string): Promise<void> {
     await this.api.delete(`/tasks/${id}`);
+  }
+
+  // Entity files (task / project / account attachments with hierarchy)
+  async getEntityFiles(entityType: 'task' | 'project' | 'account', entityId: string): Promise<import('../types').EntityFileWithSource[]> {
+    const response = await this.api.get('/entity-files', { params: { entityType, entityId } });
+    return response.data;
+  }
+
+  async uploadEntityFile(
+    entityType: 'task' | 'project' | 'account',
+    entityId: string,
+    file: File,
+    visibleToChildren?: boolean
+  ): Promise<import('../types').EntityFileWithSource> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('entityType', entityType);
+    form.append('entityId', entityId);
+    if (visibleToChildren !== undefined) {
+      form.append('visibleToChildren', String(visibleToChildren));
+    }
+    const response = await this.api.post('/entity-files/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  }
+
+  async downloadEntityFile(id: string): Promise<Blob> {
+    const response = await this.api.get(`/entity-files/${id}/download`, { responseType: 'blob' });
+    return response.data;
+  }
+
+  async deleteEntityFile(id: string): Promise<void> {
+    await this.api.delete(`/entity-files/${id}`);
   }
 
   // Settings (Admin only)
@@ -277,10 +359,18 @@ class ApiService {
     await this.api.delete(`/categories/${id}`);
   }
 
-  // Notes
-  async getAllNotes(): Promise<Note[]> {
-    const response: AxiosResponse<Note[]> = await this.api.get('/notes');
+  // Notes (support contactIds for many-to-many with contacts)
+  async getNotes(params?: { accountId?: string; contactId?: string }): Promise<Note[]> {
+    const sp = new URLSearchParams();
+    if (params?.accountId) sp.set('accountId', params.accountId);
+    if (params?.contactId) sp.set('contactId', params.contactId);
+    const q = sp.toString();
+    const response: AxiosResponse<Note[]> = await this.api.get(q ? `/notes?${q}` : '/notes');
     return response.data;
+  }
+
+  async getAllNotes(): Promise<Note[]> {
+    return this.getNotes();
   }
 
   async getNote(id: string): Promise<Note> {
@@ -288,12 +378,12 @@ class ApiService {
     return response.data;
   }
 
-  async createNote(accountId: string, note: Partial<Note>): Promise<Note> {
+  async createNote(accountId: string, note: Partial<Note> & { contactIds?: string[] }): Promise<Note> {
     const response: AxiosResponse<Note> = await this.api.post(`/accounts/${accountId}/notes`, note);
     return response.data;
   }
 
-  async updateNote(id: string, note: Partial<Note>): Promise<Note> {
+  async updateNote(id: string, note: Partial<Note> & { contactIds?: string[] }): Promise<Note> {
     const response: AxiosResponse<Note> = await this.api.patch(`/notes/${id}`, note);
     return response.data;
   }
@@ -672,6 +762,43 @@ class ApiService {
   async initializeRBAC(): Promise<any> {
     const response: AxiosResponse<any> = await this.api.post('/rbac/initialize');
     return response.data;
+  }
+
+  // External User Management
+  async createExternalUser(userData: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    accountId: string;
+    contactId?: string;
+    phone?: string;
+    role?: string;
+    notes?: string;
+  }): Promise<{ message: string; user: any; tempPassword: string }> {
+    const response: AxiosResponse<{ message: string; user: any; tempPassword: string }> = await this.api.post('/external/auth/create-user', userData);
+    return response.data;
+  }
+
+  async getExternalUsers(accountId: string): Promise<any[]> {
+    const response: AxiosResponse<any[]> = await this.api.get(`/external/auth/users/${accountId}`);
+    return response.data;
+  }
+
+  async resendPasswordReset(email: string): Promise<{ message: string }> {
+    const response: AxiosResponse<{ message: string }> = await this.api.post('/external/auth/forgot-password', { email });
+    return response.data;
+  }
+
+  async revokeExternalUser(externalUserId: string): Promise<{ message: string }> {
+    const response: AxiosResponse<{ message: string }> = await this.api.delete(`/external/auth/users/${externalUserId}`);
+    return response.data;
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await this.api.post('/external/auth/reset-password', {
+      token,
+      newPassword
+    });
   }
 }
 

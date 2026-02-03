@@ -103,6 +103,7 @@ export const handleGoogleCallback = async (req: Request, res: Response) => {
       userId: user.id, 
       email: user.email, 
       role: user.legacyRole || user.role,
+      type: 'internal',
       isGoogleUser: true 
     };
 

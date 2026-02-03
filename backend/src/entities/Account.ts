@@ -117,6 +117,9 @@ export class Account {
   @OneToMany("Task", "account")
   tasks!: any[];
 
+  @OneToMany("Project", "account")
+  projects!: any[];
+
   @OneToMany("Note", "account")
   notes!: any[];
 
@@ -128,4 +131,7 @@ export class Account {
 
   @OneToMany("Email", "account")
   emails!: any[];
+
+  @OneToMany("ExternalUser", "account")
+  externalUsers!: any[];
 } 

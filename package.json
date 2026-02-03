@@ -1,20 +1,23 @@
 {
   "name": "crm-project",
-  "version": "2.4.1-buggy",
+  "version": "2.4.1",
   "description": "Full-stack CRM application with Gmail integration and user management",
   "scripts": {
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && cross-env PORT=3002 npm run dev",
+    "dev:frontend": "cd frontend && cross-env VITE_API_URL=http://localhost:3002/api npm run dev",
     "build": "cd backend && npm run build && cd ../frontend && npm run build",
+    "build:standalone": "node scripts/build-standalone.js",
     "start": "cd backend && npm start",
+    "start:standalone": "cd backend && cross-env NODE_ENV=production PORT=3002 node dist/index.js",
     "seed": "cd backend && npm run seed",
     "test:connection": "node test-connection.js",
     "test:full": "node test-full-connection.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
     "axios": "^1.8.4"
   }
 } 

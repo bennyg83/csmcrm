@@ -109,6 +109,8 @@ export interface Task {
   tags?: string[];
   categoryId?: string;
   category?: Category;
+  projectId?: string;
+  milestoneId?: string;
   progress: number;
   createdAt: string;
   updatedAt: string;
@@ -119,7 +121,6 @@ export interface Task {
 export interface Note {
   id: string;
   accountId: string;
-  contactId?: string;
   content: string;
   author: string;
   type: 'general' | 'meeting' | 'call' | 'email';
@@ -128,7 +129,7 @@ export interface Note {
   createdAt: string;
   updatedAt: string;
   account?: Account;
-  contact?: Contact;
+  contacts?: Contact[];
 }
 
 // Health Score types
@@ -173,4 +174,18 @@ export interface DashboardMetrics {
   atRiskAccounts: number;
   averageHealthScore: number;
   recentActivities: AccountActivity[];
+}
+
+export type EntityFileOwnerType = 'task' | 'project' | 'account';
+
+export interface EntityFileWithSource {
+  id: string;
+  originalName: string;
+  mimeType?: string;
+  size: number;
+  createdAt: string;
+  source: EntityFileOwnerType;
+  sourceId: string;
+  sourceName?: string;
+  visibleToChildren?: boolean;
 } 

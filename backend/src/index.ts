@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import express from "express";
+import path from "path";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -11,17 +12,21 @@ import { AppDataSource } from "./config/data-source";
 config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
+const isProduction = process.env.NODE_ENV === "production";
 
 // Middleware
 app.use(helmet());
 app.use(compression());
 
 // CORS configuration driven by env var (comma separated origins)
-const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:5174,http://localhost:5177,http://localhost:3001")
+const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:5174,http://localhost:5177,http://localhost:3001,http://localhost:3002")
   .split(",")
   .map(o => o.trim())
   .filter(Boolean);
+if (isProduction) {
+  corsOrigins.push(`http://localhost:${PORT}`, `http://127.0.0.1:${PORT}`);
+}
 
 app.use(cors({
   origin: corsOrigins,
@@ -36,43 +41,45 @@ app.get("/health", (_req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
-// Test endpoint to verify seeded data (no authentication required)
-app.get("/api/test/data", async (_req, res) => {
-  try {
-    const accountRepository = AppDataSource.getRepository("Account");
-    const contactRepository = AppDataSource.getRepository("Contact");
-    const taskRepository = AppDataSource.getRepository("Task");
-    
-    const accounts = await accountRepository.find();
-    const contacts = await contactRepository.find();
-    const tasks = await taskRepository.find();
-    
-    res.json({
-      message: "Database connection and data verification successful!",
-      counts: {
-        accounts: accounts.length,
-        contacts: contacts.length,
-        tasks: tasks.length
-      },
-      sampleData: {
-        accounts: accounts.slice(0, 2).map(acc => ({
-          id: acc.id,
-          name: acc.name,
-          status: acc.status,
-          health: acc.health
-        })),
-        tasks: tasks.slice(0, 2).map(task => ({
-          id: task.id,
-          title: task.title,
-          status: task.status,
-          progress: task.progress
-        }))
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch test data", message: error instanceof Error ? error.message : "Unknown error" });
-  }
-});
+// Test endpoint to verify seeded data (development only; disable in production)
+if (process.env.NODE_ENV !== "production") {
+  app.get("/api/test/data", async (_req, res) => {
+    try {
+        const accountRepository = AppDataSource.getRepository("Account");
+      const contactRepository = AppDataSource.getRepository("Contact");
+      const taskRepository = AppDataSource.getRepository("Task");
+
+      const accounts = await accountRepository.find();
+      const contacts = await contactRepository.find();
+      const tasks = await taskRepository.find();
+
+      res.json({
+        message: "Database connection and data verification successful!",
+        counts: {
+          accounts: accounts.length,
+          contacts: contacts.length,
+          tasks: tasks.length
+        },
+        sampleData: {
+          accounts: accounts.slice(0, 2).map(acc => ({
+            id: acc.id,
+            name: acc.name,
+            status: acc.status,
+            health: acc.health
+          })),
+          tasks: tasks.slice(0, 2).map(task => ({
+            id: task.id,
+            title: task.title,
+            status: task.status,
+            progress: task.progress
+          }))
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch test data", message: error instanceof Error ? error.message : "Unknown error" });
+    }
+  });
+}
 
 // Import routes
 import authRoutes from "./routes/auth";
@@ -93,6 +100,12 @@ import workflowRoutes from "./routes/workflows";
 import reportRoutes from "./routes/reports";
 import rbacRoutes from "./routes/rbac";
 import portalRoutes from "./routes/portal";
+import externalRoutes from "./routes/external";
+import dashboardRoutes from "./routes/dashboard";
+import projectRoutes from "./routes/projects";
+import milestoneRoutes from "./routes/milestones";
+import projectContactRoutes from "./routes/projectContacts";
+import entityFileRoutes from "./routes/entityFiles";
 
 // API routes
 app.use("/api/auth", authRoutes);
@@ -114,6 +127,12 @@ app.use("/api/workflows", workflowRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/rbac", rbacRoutes);
 app.use("/api/portal", portalRoutes);
+app.use("/api/external", externalRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/milestones", milestoneRoutes);
+app.use("/api/project-contacts", projectContactRoutes);
+app.use("/api/entity-files", entityFileRoutes);
 
 // Error handling middleware
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -126,10 +145,19 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   res.status(status).json({ error: message });
 });
 
-// 404 handler
-app.use("*", (req, res) => {
-  res.status(404).json({ error: "Route not found" });
-});
+// Production: serve built frontend from backend (single-process / executable bundle)
+if (isProduction) {
+  const publicDir = path.join(__dirname, "public");
+  app.use(express.static(publicDir));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(publicDir, "index.html"));
+  });
+} else {
+  // 404 handler (development)
+  app.use("*", (req, res) => {
+    res.status(404).json({ error: "Route not found" });
+  });
+}
 
 // Initialize database and start server
 async function startServer() {

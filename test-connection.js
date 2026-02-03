@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'http://localhost:3002/api';
 
 async function testConnection() {
   console.log('🧪 Testing CRM Backend-Frontend Connection...\n');

@@ -498,17 +498,22 @@ async function seedDatabase() {
     );
     console.log("✅ Tasks created");
 
-    // Create notes
+    // Create notes (many-to-many with contacts via note_contacts)
     console.log("📝 Creating notes...");
     const noteRepository = AppDataSource.getRepository(Note);
     const createdNotes = await Promise.all(
-      sampleNotes.map((note, index) => {
+      sampleNotes.map(async (note, index) => {
         const newNote = noteRepository.create({
           ...note,
           accountId: createdAccounts[index].id,
-          contactId: createdContacts[index * 2]?.id
         });
-        return noteRepository.save(newNote);
+        const saved = await noteRepository.save(newNote);
+        const contact = createdContacts[index * 2];
+        if (contact) {
+          saved.contacts = [contact];
+          await noteRepository.save(saved);
+        }
+        return saved;
       })
     );
     console.log("✅ Notes created");

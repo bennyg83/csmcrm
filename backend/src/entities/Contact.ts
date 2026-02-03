@@ -5,10 +5,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  ManyToMany,
   OneToMany,
+  OneToOne,
   JoinColumn,
   BeforeInsert,
-  BeforeUpdate
+  BeforeUpdate,
 } from "typeorm";
 import { MinLength, IsEmail, IsOptional } from "class-validator";
 import * as bcrypt from "bcryptjs";
@@ -83,11 +85,14 @@ export class Contact {
   @JoinColumn({ name: "accountId" })
   account!: any;
 
-  @OneToMany("Note", "contact")
+  @ManyToMany("Note", "contacts")
   notes!: any[];
 
   @OneToMany("Email", "contact")
   emails!: any[];
+
+  @OneToOne("ExternalUser", "contact")
+  externalUser?: any;
 
   @BeforeInsert()
   @BeforeUpdate()

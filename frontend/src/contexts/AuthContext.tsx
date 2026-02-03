@@ -5,7 +5,7 @@ import { apiService } from '../services/api';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, type?: 'internal' | 'external') => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
@@ -31,31 +31,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Check for existing authentication on load
-    const initAuth = async () => {
+    const initAuth = () => {
       console.log('AuthContext - initAuth starting');
       const token = localStorage.getItem('token');
-      console.log('AuthContext - token found:', !!token);
+      const userType = localStorage.getItem('userType');
+      console.log('AuthContext - token found:', !!token, 'userType:', userType);
       
       // Always start with null user state
       setUser(null);
       
-      if (token) {
-        try {
-          // Try to get user info with the token
-          const userData = await apiService.getMe();
-          console.log('AuthContext - user data received:', userData);
-          setUser(userData);
-        } catch (error) {
-          console.log('AuthContext - token invalid, removing');
-          // Token is invalid, remove it
-          localStorage.removeItem('token');
-          setUser(null);
-        }
+      if (token && userType === 'internal') {
+        // For internal users, try to validate token
+        console.log('AuthContext - attempting to validate internal user token');
+        
+        // Use a timeout to avoid blocking the initial render
+        setTimeout(async () => {
+          try {
+            const userData = await apiService.getMe();
+            console.log('AuthContext - internal user data received:', userData);
+            setUser(userData);
+          } catch (error) {
+            console.log('AuthContext - token invalid, removing');
+            localStorage.removeItem('token');
+            localStorage.removeItem('userType');
+            setUser(null);
+          }
+        }, 100);
       } else {
-        // No token found, ensure user is null
-        console.log('AuthContext - no token found, setting user to null');
-        setUser(null);
+        console.log('AuthContext - no valid token or userType, skipping authentication');
       }
+      
       setLoading(false);
       console.log('AuthContext - initAuth completed');
     };
@@ -63,15 +68,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, type: 'internal' | 'external' = 'internal') => {
     try {
       setLoading(true);
-      const response = await apiService.login(email, password);
+      const response = await apiService.login(email, password, type);
       localStorage.setItem('token', response.token);
+      localStorage.setItem('userType', type);
       setUser(response.user);
-    } catch (error) {
+      return { success: true };
+    } catch (error: any) {
       console.error('Login failed:', error);
-      throw error;
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Login failed' 
+      };
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 {
   "name": "crm-backend",
-  "version": "2.4.1-buggy",
+  "version": "2.4.1",
   "description": "CRM Backend API with Gmail integration and user management",
   "main": "dist/index.js",
   "scripts": {

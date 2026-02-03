@@ -4,6 +4,8 @@ import path from "path";
 
 config();
 
+// In production, use migrations only; never synchronize or dropSchema
+const isDev = process.env.NODE_ENV === "development";
 export const AppDataSource = new DataSource({
   type: "postgres",
   host: process.env.DB_HOST || "localhost",
@@ -11,8 +13,8 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER || "postgres",
   password: process.env.DB_PASSWORD || "postgres",
   database: process.env.DB_NAME || "crm_app",
-  synchronize: process.env.NODE_ENV === "development",
-  dropSchema: process.env.NODE_ENV === "development" && process.env.DROP_SCHEMA === "true",
+  synchronize: isDev,
+  dropSchema: isDev && process.env.DROP_SCHEMA === "true",
   logging: process.env.NODE_ENV === "development",
   entities: [path.join(__dirname, "../entities/*.{ts,js}")],
   migrations: [path.join(__dirname, "../migrations/*.{ts,js}")],
