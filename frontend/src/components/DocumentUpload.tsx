@@ -12,34 +12,21 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
   Grid,
   Card,
   CardContent,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Switch,
   FormControlLabel
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
-  Description as DocumentIcon,
   CheckCircle as CheckIcon,
-  Error as ErrorIcon,
-  Info as InfoIcon,
   AutoAwesome as LLMIcon,
   Refresh as RefreshIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
 import { apiService } from '../services/api';
-import { Account } from '../types';
 
 interface ParsedAccountData {
   name?: string;

@@ -143,7 +143,7 @@ const AccountDetailPage: React.FC = () => {
 
   // Structured notes (linked to contacts)
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
-  const [noteForm, setNoteForm] = useState({ content: '', type: 'general' as const, contactIds: [] as string[] });
+  const [noteForm, setNoteForm] = useState<{ content: string; type: 'general' | 'meeting' | 'call' | 'email'; contactIds: string[] }>({ content: '', type: 'general', contactIds: [] });
   const [noteSaving, setNoteSaving] = useState(false);
 
   const { user } = useAuth();

@@ -8,22 +8,12 @@ import {
   Button,
   Chip,
   Grid,
-  Divider,
   Alert,
   CircularProgress,
-  Switch,
-  FormControlLabel,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  ListItemSecondaryAction,
-  Paper,
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
-  TextField
+  DialogActions
 } from '@mui/material';
 import {
   Email as EmailIcon,

@@ -6,10 +6,13 @@ The frontend is built and deployed to **GitHub Pages** by the workflow [`.github
 
 ## One-time setup
 
-### 1. Enable GitHub Pages (Actions)
+### 1. Use GitHub Actions as the Pages source (required)
 
-1. In the repo: **Settings → Pages**.
-2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+**Important:** Do **not** set Source to **“Deploy from a branch”**. That would serve the raw repo (folder list, README) instead of the login app.
+
+1. In the repo go to **Settings → Pages**.
+2. Under **Build and deployment**, set **Source** to **GitHub Actions** (not “Deploy from a branch”).
+3. Save. The site will update after the next workflow run (see below).
 
 ### 2. Set the API URL (required for production)
 

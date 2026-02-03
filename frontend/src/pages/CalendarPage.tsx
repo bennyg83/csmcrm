@@ -141,8 +141,8 @@ const CalendarPage: React.FC = () => {
         status: task.status as any,
         priority: task.priority as any,
         dueDate: new Date(task.dueDate),
-        assignedTo: Array.isArray(task.assignedTo) ? task.assignedTo : [task.assignedTo],
-        assignedToClient: Array.isArray(task.assignedToClient) ? task.assignedToClient : [task.assignedToClient],
+        assignedTo: (Array.isArray(task.assignedTo) ? task.assignedTo : [task.assignedTo]).filter((x): x is string => typeof x === 'string'),
+        assignedToClient: (Array.isArray(task.assignedToClient) ? task.assignedToClient : task.assignedToClient ? [task.assignedToClient] : []).filter((x): x is string => typeof x === 'string'),
         accountId: task.accountId || '',
         categoryId: task.categoryId || '',
         tags: task.tags || [],
@@ -154,11 +154,15 @@ const CalendarPage: React.FC = () => {
 
   const handleSaveTask = async () => {
     try {
+      const payload = {
+        ...taskForm,
+        dueDate: taskForm.dueDate instanceof Date ? taskForm.dueDate.toISOString() : (taskForm.dueDate as string),
+      };
       if (editingTask) {
-        const updatedTask = await apiService.updateTask(editingTask.id, taskForm);
+        const updatedTask = await apiService.updateTask(editingTask.id, payload);
         setTasks(prev => prev.map(task => task.id === editingTask.id ? updatedTask : task));
       } else {
-        const newTask = await apiService.createTask(taskForm);
+        const newTask = await apiService.createTask(payload);
         setTasks(prev => [newTask, ...prev]);
       }
       setTaskDialogOpen(false);
@@ -328,8 +332,6 @@ const CalendarPage: React.FC = () => {
                 label="Assigned To"
                 value={taskForm.assignedTo}
                 onChange={(value) => setTaskForm({ ...taskForm, assignedTo: value })}
-                users={users}
-                multiple
               />
             </Box>
           </DialogContent>

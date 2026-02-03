@@ -17,8 +17,6 @@ import {
   Alert,
   Chip,
   Grid,
-  IconButton,
-  Tooltip,
   Divider
 } from '@mui/material';
 import {
@@ -26,7 +24,6 @@ import {
   Delete as DeleteIcon,
   Download as DownloadIcon,
   Upload as UploadIcon,
-  Close as CloseIcon,
   CheckBox as CheckBoxIcon,
   CheckBoxOutlineBlank as CheckBoxOutlineBlankIcon
 } from '@mui/icons-material';

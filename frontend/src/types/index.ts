@@ -3,6 +3,11 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  /** Portal/external user display name parts */
+  firstName?: string;
+  lastName?: string;
+  /** Portal: account display name */
+  accountName?: string;
   role?: string; // New RBAC role
   legacyRole?: 'admin' | 'user' | 'manager' | 'sales' | 'support'; // Legacy role for backward compatibility
   isGoogleUser: boolean;

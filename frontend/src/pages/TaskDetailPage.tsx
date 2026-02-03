@@ -57,7 +57,7 @@ const TaskDetailPage: React.FC = () => {
   const [editForm, setEditForm] = useState({
     title: '',
     description: '',
-    status: 'To Do' as 'To Do' | 'In Progress' | 'Completed',
+    status: 'To Do' as 'To Do' | 'In Progress' | 'Completed' | 'Cancelled',
     priority: 'Medium' as 'Low' | 'Medium' | 'High',
     dueDate: new Date(),
     assignedTo: [] as string[],
@@ -83,7 +83,7 @@ const TaskDetailPage: React.FC = () => {
           status: taskData.status,
           priority: taskData.priority,
           dueDate: new Date(taskData.dueDate),
-          assignedTo: taskData.assignedTo || [],
+          assignedTo: Array.isArray(taskData.assignedTo) ? taskData.assignedTo : taskData.assignedTo ? [taskData.assignedTo] : [],
           progress: taskData.progress || 0
         });
         
@@ -120,7 +120,11 @@ const TaskDetailPage: React.FC = () => {
     if (!task) return;
     
     try {
-      const updatedTask = await apiService.updateTask(task.id, editForm);
+      const payload = {
+        ...editForm,
+        dueDate: editForm.dueDate instanceof Date ? editForm.dueDate.toISOString() : (editForm.dueDate as string),
+      };
+      const updatedTask = await apiService.updateTask(task.id, payload);
       setTask(updatedTask);
       setEditDialogOpen(false);
     } catch (err) {

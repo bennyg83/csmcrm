@@ -3,7 +3,7 @@ import { useParams, Link as RouterLink } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Contact, Account } from '../types';
 import { usePermissions } from '../utils/rbac';
-import { Box, Typography, CircularProgress, Alert, Card, CardContent, Avatar, Chip, Divider, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, OutlinedInput, MenuItem, Checkbox, ListItemText as MuiListItemText, Grid, ToggleButtonGroup, ToggleButton, Paper, Tooltip } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, Card, CardContent, Avatar, Chip, Divider, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, OutlinedInput, MenuItem, Checkbox, List, ListItem, ListItemText, ListItemText as MuiListItemText, Grid, ToggleButtonGroup, ToggleButton, Paper, Tooltip } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
@@ -758,7 +758,7 @@ const ContactDetailPage: React.FC = () => {
                 <InputLabel>Status</InputLabel>
                 <Select
                   value={taskEditForm.status || ''}
-                  onChange={(e) => setTaskEditForm({ ...taskEditForm, status: e.target.value })}
+                  onChange={(e) => setTaskEditForm({ ...taskEditForm, status: e.target.value as 'To Do' | 'In Progress' | 'Completed' | 'Cancelled' })}
                   input={<OutlinedInput label="Status" />}
                 >
                   <MenuItem value="To Do">To Do</MenuItem>
@@ -773,7 +773,7 @@ const ContactDetailPage: React.FC = () => {
                 <InputLabel>Priority</InputLabel>
                 <Select
                   value={taskEditForm.priority || ''}
-                  onChange={(e) => setTaskEditForm({ ...taskEditForm, priority: e.target.value })}
+                  onChange={(e) => setTaskEditForm({ ...taskEditForm, priority: e.target.value as 'Low' | 'Medium' | 'High' })}
                   input={<OutlinedInput label="Priority" />}
                 >
                   <MenuItem value="Low">Low</MenuItem>
