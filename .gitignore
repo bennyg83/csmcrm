@@ -121,4 +121,7 @@ coverage/
 
 # Misc
 *.tgz
-*.tar.gz 
+*.tar.gz
+
+# Prompt/secret files (do not commit)
+new_prompt.txt 
