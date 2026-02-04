@@ -3,7 +3,7 @@ import {
   DndContext,
   DragEndEvent,
   DragStartEvent,
-  closestCenter,
+  pointerWithin,
   useSensor,
   useSensors,
   PointerSensor,
@@ -62,6 +62,7 @@ interface DroppableColumnProps {
 const DroppableColumn: React.FC<DroppableColumnProps> = ({ id, children, status }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: status,
+    data: { status },
   });
 
   return (
@@ -69,6 +70,7 @@ const DroppableColumn: React.FC<DroppableColumnProps> = ({ id, children, status 
       ref={setNodeRef}
       sx={{
         minHeight: 200,
+        flex: 1,
         backgroundColor: isOver ? 'action.hover' : 'transparent',
         transition: 'background-color 0.2s ease',
         borderRadius: 1,
@@ -223,7 +225,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ tasks, onTaskUpdate, onTaskCl
   }, [tasks]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
     useSensor(KeyboardSensor)
   );
 
@@ -238,67 +242,41 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ tasks, onTaskUpdate, onTaskCl
     if (!over) return;
 
     const activeId = active.id as string;
-    const overId = over.id as string;
+    const overId = String(over.id);
 
     if (activeId === overId) return;
 
-    // Check if we're dropping on a task or a column
     const task = tasks.find(t => t.id === activeId);
-    const targetTask = tasks.find(t => t.id === overId);
-    
-    if (!task) {
-      console.warn('Task not found:', activeId);
-      return;
-    }
+    if (!task) return;
 
-    let newStatus: 'To Do' | 'In Progress' | 'Completed' | 'Cancelled';
+    // Resolve new status: over can be a column (status string) or another task id
+    const targetTask = tasks.find(t => t.id === overId);
+    const columnStatuses = ['To Do', 'In Progress', 'Completed', 'Cancelled'] as const;
+    let newStatus: typeof columnStatuses[number] | null = null;
 
     if (targetTask) {
-      // Dropping on another task - use that task's status
       newStatus = targetTask.status;
-    } else {
-      // Dropping on a column - overId should be the status
-      if (overId === 'To Do' || overId === 'In Progress' || overId === 'Completed' || overId === 'Cancelled') {
-        newStatus = overId;
-      } else {
-        console.warn('Invalid status value:', { overId });
-        return;
-      }
+    } else if (columnStatuses.includes(overId as any)) {
+      newStatus = overId as typeof columnStatuses[number];
+    }
+    // Support droppable data (e.g. from useDroppable data: { status })
+    if (!newStatus && over.data?.current?.status) {
+      newStatus = over.data.current.status as typeof columnStatuses[number];
     }
 
-    // Validate that newStatus is a valid column key
-    if (!Object.keys(columns).includes(newStatus)) {
-      console.warn('Invalid status:', { newStatus, taskId: activeId });
-      return;
-    }
-    
-    if (newStatus !== task.status) {
-      // Update the task status
-      onTaskUpdate(activeId, { status: newStatus });
-      
-      // Update local state
-      setColumns(prev => {
-        const newColumns = { ...prev };
-        
-        // Remove from old column
-        Object.keys(newColumns).forEach(status => {
-          if (Array.isArray(newColumns[status as keyof typeof columns])) {
-            newColumns[status as keyof typeof columns] = newColumns[status as keyof typeof columns].filter(t => t.id !== activeId);
-          }
-        });
-        
-        // Add to new column
-        const updatedTask = { ...task, status: newStatus };
-        if (Array.isArray(newColumns[newStatus])) {
-          newColumns[newStatus] = [...newColumns[newStatus], updatedTask];
-        } else {
-          // Fallback: ensure the column is an array
-          newColumns[newStatus] = [updatedTask];
-        }
-        
-        return newColumns;
+    if (!newStatus || !columnStatuses.includes(newStatus) || newStatus === task.status) return;
+
+    // Optimistic update first so UI feels instant
+    setColumns(prev => {
+      const next = { ...prev };
+      (columnStatuses as unknown as (keyof typeof next)[]).forEach(s => {
+        next[s] = (next[s] || []).filter(t => t.id !== activeId);
       });
-    }
+      next[newStatus!] = [...(next[newStatus!] || []), { ...task, status: newStatus! }];
+      return next;
+    });
+
+    onTaskUpdate(activeId, { status: newStatus });
   };
 
   const getColumnTitle = (status: string) => {
@@ -324,7 +302,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ tasks, onTaskUpdate, onTaskCl
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={pointerWithin}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >

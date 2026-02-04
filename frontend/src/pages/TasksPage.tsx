@@ -1015,11 +1015,14 @@ const TasksPage: React.FC = () => {
               key={`kanban-${filteredTasks.length}`}
               tasks={filteredTasks}
               onTaskUpdate={async (taskId, updates) => {
+                setTasks(prev => prev.map(task => task.id === taskId ? { ...task, ...updates } : task));
                 try {
                   const updatedTask = await apiService.updateTask(taskId, updates);
                   setTasks(prev => prev.map(task => task.id === taskId ? updatedTask : task));
                 } catch (error) {
                   console.error('Error updating task:', error);
+                  const fresh = await apiService.getTasks();
+                  setTasks(fresh);
                 }
               }}
               onTaskClick={(task) => setSelectedTask(task)}
