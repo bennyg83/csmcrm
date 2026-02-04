@@ -40,11 +40,11 @@ const ProjectsPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const [projRes, accRes] = await Promise.all([
-          apiService.getProjects(accountFilter || undefined),
-          apiService.getAccounts(),
-        ]);
+        // Load projects first so the list appears quickly; then load accounts for the filter dropdown
+        const projRes = await apiService.getProjects(accountFilter || undefined);
         setProjects(projRes);
+        setLoading(false);
+        const accRes = await apiService.getAccounts();
         setAccounts(accRes);
       } catch (e) {
         console.error(e);

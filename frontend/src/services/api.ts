@@ -23,6 +23,11 @@ class ApiService {
     if (baseURL && !baseURL.endsWith('/api')) baseURL = baseURL.replace(/\/$/, '') + '/api';
     if (!baseURL) baseURL = 'http://localhost:3004/api';
 
+    // Expose backend origin for console ping (e.g. pingBackend()) — health is at origin/health
+    if (typeof window !== 'undefined') {
+      (window as unknown as { __CRM_API_BASE?: string }).__CRM_API_BASE = baseURL.replace(/\/api\/?$/, '');
+    }
+
     this.api = axios.create({
       baseURL,
       headers: {

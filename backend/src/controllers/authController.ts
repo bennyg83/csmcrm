@@ -156,11 +156,11 @@ export const createUser = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'User with this email already exists' });
     }
 
-    // Create new user
+    // Create new user (persist role to legacyRole column)
     const user = new User();
     user.name = name;
     user.email = email;
-    user.role = role as any;
+    user.legacyRole = role as 'admin' | 'user' | 'manager' | 'sales' | 'support';
     user.isGoogleUser = false;
 
     // Set password (hash it if provided, otherwise generate temporary password)
@@ -238,7 +238,7 @@ export const updateUser = async (req: Request, res: Response) => {
       if (!validRoles.includes(role)) {
         return res.status(400).json({ error: 'Invalid role. Must be one of: ' + validRoles.join(', ') });
       }
-      user.role = role as any;
+      user.legacyRole = role as 'admin' | 'user' | 'manager' | 'sales' | 'support';
     }
     if (password) {
       user.password = await bcrypt.hash(password, 10);

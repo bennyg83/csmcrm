@@ -1,0 +1,14 @@
+---
+description: GitHub push target for this project — use csmcrm remote unless stated otherwise
+alwaysApply: true
+---
+
+# GitHub Push Target
+
+For this project, **all pushes to GitHub go to the `csmcrm` remote** unless the user explicitly says otherwise.
+
+- **Default push**: Use `git push csmcrm main` (or the current branch) when pushing to GitHub.
+- **Do not** use `git push origin main` for this project — `origin` points to a different repo (mine_dont_touch).
+- If the user specifies a different remote or repo, follow their instruction instead.
+
+This project’s primary GitHub repo is **csmcrm** (e.g. `https://github.com/bennyg83/csmcrm.git`).
