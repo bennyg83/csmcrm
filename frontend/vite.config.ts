@@ -8,7 +8,15 @@ export default defineConfig(({ mode }) => {
 
   return {
   base,
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'html-base-path',
+      transformIndexHtml(html: string) {
+        return html.replace(/%BASE_URL%/g, base);
+      },
+    },
+  ],
   server: {
     port: 5173,
     host: '0.0.0.0',
