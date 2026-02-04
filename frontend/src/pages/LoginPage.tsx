@@ -100,28 +100,31 @@ const LoginPage: React.FC = () => {
             </Alert>
           )}
 
-          {/* Google Login */}
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={googleLoading ? <CircularProgress size={20} /> : <GoogleIcon />}
-            onClick={handleGoogleLogin}
-            disabled={googleLoading || loading}
-            sx={{
-              mt: 2,
-              mb: 2,
-              borderColor: '#4285f4',
-              color: '#4285f4',
-              '&:hover': {
-                borderColor: '#3367d6',
-                backgroundColor: 'rgba(66, 133, 244, 0.04)',
-              },
-            }}
-          >
-            {googleLoading ? 'Connecting to Google...' : 'Sign in with Google'}
-          </Button>
-
-          <Divider sx={{ width: '100%', my: 2 }}>OR</Divider>
+          {/* Google Login - hidden until configured */}
+          {false && (
+            <>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={googleLoading ? <CircularProgress size={20} /> : <GoogleIcon />}
+                onClick={handleGoogleLogin}
+                disabled={googleLoading || loading}
+                sx={{
+                  mt: 2,
+                  mb: 2,
+                  borderColor: '#4285f4',
+                  color: '#4285f4',
+                  '&:hover': {
+                    borderColor: '#3367d6',
+                    backgroundColor: 'rgba(66, 133, 244, 0.04)',
+                  },
+                }}
+              >
+                {googleLoading ? 'Connecting to Google...' : 'Sign in with Google'}
+              </Button>
+              <Divider sx={{ width: '100%', my: 2 }}>OR</Divider>
+            </>
+          )}
 
           {/* Regular Login Form */}
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
@@ -158,23 +161,23 @@ const LoginPage: React.FC = () => {
             >
               {loading ? 'Signing In...' : 'Sign In'}
             </Button>
-            <Typography variant="body2" color="text.secondary" align="center">
-              Demo credentials: admin@crm.com / admin123
-            </Typography>
-            <Box sx={{ mt: 2, textAlign: 'center' }}>
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => {
-                  console.log('=== DEBUG AUTH STATE ===');
-                  console.log('localStorage token:', localStorage.getItem('token'));
-                  console.log('sessionStorage:', Object.keys(sessionStorage));
-                  console.log('cookies:', document.cookie);
-                }}
-              >
-                Debug Auth State
-              </Button>
-            </Box>
+            {/* Dev only: logs token, sessionStorage keys, and cookies to the browser console for auth debugging */}
+            {import.meta.env.DEV && (
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => {
+                    console.log('=== DEBUG AUTH STATE ===');
+                    console.log('localStorage token:', localStorage.getItem('token'));
+                    console.log('sessionStorage:', Object.keys(sessionStorage));
+                    console.log('cookies:', document.cookie);
+                  }}
+                >
+                  Debug Auth State
+                </Button>
+              </Box>
+            )}
           </Box>
         </Paper>
       </Box>

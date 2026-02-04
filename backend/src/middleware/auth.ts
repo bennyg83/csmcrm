@@ -137,14 +137,17 @@ export const requireRole = (roles: string[]) => {
 };
 
 /**
- * Check if user is admin
+ * Check if user is admin (supports legacyRole and role relation)
  */
 export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  if (req.user.role !== 'admin') {
+  const roleName = typeof req.user.role === 'object' && req.user.role?.name
+    ? req.user.role.name
+    : req.user.legacyRole ?? '';
+  if (roleName !== 'admin') {
     return res.status(403).json({ error: 'Admin access required' });
   }
 

@@ -101,7 +101,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const userRepository = AppDataSource.getRepository(User);
     
-    // Get all users excluding sensitive data
+    // Get all users excluding sensitive data (no role relation for faster load; frontend uses legacyRole)
     const users = await userRepository.find({
       select: {
         id: true,
@@ -114,7 +114,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
         createdAt: true,
         updatedAt: true
       },
-      relations: ['role'],
       order: { createdAt: 'DESC' }
     });
 

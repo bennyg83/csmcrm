@@ -81,8 +81,7 @@ class ApiService {
   }
 
   async getAllUsers(): Promise<User[]> {
-    // Use public endpoint for development/testing
-    const response: AxiosResponse<User[]> = await this.api.get('/auth/users/public');
+    const response: AxiosResponse<User[]> = await this.api.get('/auth/users');
     return response.data;
   }
 
@@ -102,7 +101,7 @@ class ApiService {
   }
 
   async getUsers(): Promise<User[]> {
-    const response: AxiosResponse<User[]> = await this.api.get('/auth/users/public');
+    const response: AxiosResponse<User[]> = await this.api.get('/auth/users');
     return response.data;
   }
 
