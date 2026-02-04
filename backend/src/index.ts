@@ -126,31 +126,43 @@ import projectContactRoutes from "./routes/projectContacts";
 import entityFileRoutes from "./routes/entityFiles";
 
 // API routes
-app.use("/api/auth", authRoutes);
-app.use("/api/auth", googleAuthRoutes);
-app.use("/api/gmail", gmailRoutes);
-app.use("/api/accounts", accountRoutes);
-// Keep existing path structure: contacts nested under accounts
-app.use("/api/accounts", contactRoutes);
-app.use("/api/tasks", taskRoutes);
-app.use("/api/notes", noteRoutes);
-app.use("/api/health-scores", healthScoreRoutes);
-app.use("/api/account-activities", accountActivityRoutes);
-app.use("/api/account-tiers", accountTierRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/documents", documentRoutes);
-app.use("/api/calendar", calendarRoutes);
-app.use("/api/leads", leadRoutes);
-app.use("/api/workflows", workflowRoutes);
-app.use("/api/reports", reportRoutes);
-app.use("/api/rbac", rbacRoutes);
-app.use("/api/portal", portalRoutes);
-app.use("/api/external", externalRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/projects", projectRoutes);
-app.use("/api/milestones", milestoneRoutes);
-app.use("/api/project-contacts", projectContactRoutes);
-app.use("/api/entity-files", entityFileRoutes);
+//
+// Note: we intentionally mount the API under both:
+// - `/api/*` (default, local dev + most reverse proxies)
+// - `/csmcrm/api/*` (path-based reverse proxies like Tailscale Serve/Funnel when mounted under `/csmcrm`)
+//
+// This keeps GitHub Pages + Tailscale setups working even if the proxy does not strip the mount prefix.
+function mountApiRoutes(basePath: string) {
+  const prefix = (basePath || "").replace(/\/$/, "");
+  app.use(`${prefix}/api/auth`, authRoutes);
+  app.use(`${prefix}/api/auth`, googleAuthRoutes);
+  app.use(`${prefix}/api/gmail`, gmailRoutes);
+  app.use(`${prefix}/api/accounts`, accountRoutes);
+  // Keep existing path structure: contacts nested under accounts
+  app.use(`${prefix}/api/accounts`, contactRoutes);
+  app.use(`${prefix}/api/tasks`, taskRoutes);
+  app.use(`${prefix}/api/notes`, noteRoutes);
+  app.use(`${prefix}/api/health-scores`, healthScoreRoutes);
+  app.use(`${prefix}/api/account-activities`, accountActivityRoutes);
+  app.use(`${prefix}/api/account-tiers`, accountTierRoutes);
+  app.use(`${prefix}/api/categories`, categoryRoutes);
+  app.use(`${prefix}/api/documents`, documentRoutes);
+  app.use(`${prefix}/api/calendar`, calendarRoutes);
+  app.use(`${prefix}/api/leads`, leadRoutes);
+  app.use(`${prefix}/api/workflows`, workflowRoutes);
+  app.use(`${prefix}/api/reports`, reportRoutes);
+  app.use(`${prefix}/api/rbac`, rbacRoutes);
+  app.use(`${prefix}/api/portal`, portalRoutes);
+  app.use(`${prefix}/api/external`, externalRoutes);
+  app.use(`${prefix}/api/dashboard`, dashboardRoutes);
+  app.use(`${prefix}/api/projects`, projectRoutes);
+  app.use(`${prefix}/api/milestones`, milestoneRoutes);
+  app.use(`${prefix}/api/project-contacts`, projectContactRoutes);
+  app.use(`${prefix}/api/entity-files`, entityFileRoutes);
+}
+
+mountApiRoutes("");
+mountApiRoutes("/csmcrm");
 
 // Error handling middleware
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

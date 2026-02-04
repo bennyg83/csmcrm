@@ -36,15 +36,23 @@ Replace `crm-mini.tail34e202.ts.net` with your Funnel hostname from `tailscale f
 
 The frontend will call `https://crm-mini.tail34e202.ts.net/csmcrm/api`.
 
-### Option B — Second Tailscale node (second Funnel URL)
+### Option B — Separate Funnel URL (same host or different machine)
 
-Run this project’s backend on another machine or container that has Tailscale (different device name). On that node: `tailscale funnel --bg 3004`, then `tailscale funnel status` and copy the HTTPS URL.
+**Same host:** Expose CSM (port 3004) on a second Funnel port so it has its own base URL (no `/csmcrm` path). Funnel allows ports 443, 8443, and 10000. If Pilzno already uses 443, run:
+
+```bash
+tailscale funnel --https=8443 --bg 3004
+```
+
+Then run `tailscale funnel status` and use the HTTPS URL for port 8443 (e.g. `https://crm-mini.tail34e202.ts.net:8443`).
 
 | Secret | Value (example) |
 |--------|------------------|
-| **BACKEND_API_URL** | `https://other-device.tail34e202.ts.net` |
+| **BACKEND_API_URL** | `https://crm-mini.tail34e202.ts.net:8443` |
 
-Use the exact URL from `tailscale funnel status` on that node (no trailing slash). The frontend will call `https://other-device.tail34e202.ts.net/api`.
+The frontend will call `https://crm-mini.tail34e202.ts.net:8443/api`. No path prefix; backend serves `/api/*` as usual.
+
+**Different machine:** Run this project’s backend on another device that has Tailscale. On that node: `tailscale funnel --bg 3004`, then `tailscale funnel status` and copy the HTTPS URL (e.g. `https://other-device.tail34e202.ts.net`). Set **BACKEND_API_URL** to that URL (no trailing slash).
 
 ---
 
@@ -95,8 +103,8 @@ PostgreSQL (port 5436, crm_db_fb) — local only, segregated
 | 6 | Backend URL at build time | Workflow passes `secrets.BACKEND_API_URL` as `VITE_API_BASE_URL`; frontend appends `/api` |
 | 7 | `.nojekyll` in built output | In `frontend/public/.nojekyll` (copied to dist) |
 | 8 | Backend CORS for GitHub Pages | Backend allows `https://bennyg83.github.io` and `https://bennyg83.github.io/csmcrm` |
-| 9 | Expose this backend via Tailscale | Option A: reverse proxy path (e.g. `/csmcrm` → localhost:3004); Option B: second node with `tailscale funnel --bg 3004` |
-| 10 | Set `BACKEND_API_URL` in this repo | Option A: `https://YOUR_FUNNEL_HOST/path` (e.g. `/csmcrm`). Option B: `https://OTHER_DEVICE.tailXXXX.ts.net`. No trailing slash. |
+| 9 | Expose this backend via Tailscale | Option A: reverse proxy or Serve path (e.g. `/csmcrm` → localhost:3004). Option B (same host): `tailscale funnel --https=8443 --bg 3004`; Option B (other machine): `tailscale funnel --bg 3004` on that node. |
+| 10 | Set `BACKEND_API_URL` in this repo | Option A: `https://YOUR_FUNNEL_HOST/csmcrm`. Option B (same host): `https://YOUR_NODE.tailXXXX.ts.net:8443`. Option B (other machine): `https://OTHER_DEVICE.tailXXXX.ts.net`. No trailing slash. |
 
 ---
 

@@ -102,7 +102,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
     
     // Force a complete page reload to clear any cached state
-    window.location.replace('/login');
+    const baseUrl = import.meta.env.BASE_URL || '/';
+    const loginUrl = baseUrl.endsWith('/') ? `${baseUrl}login` : `${baseUrl}/login`;
+    window.location.replace(loginUrl);
   };
 
   const value: AuthContextType = {

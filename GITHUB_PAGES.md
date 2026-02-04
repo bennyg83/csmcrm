@@ -20,11 +20,20 @@ For the full setup (Tailscale Funnel, CORS, segregation from other projects), se
 
 The workflow uses the **secret** `BACKEND_API_URL`. The built frontend calls that URL + `/api`. Set it to one of:
 
-- **Option A (reverse proxy, same machine as Pilzno):**  
+- **Option A (path-based, one Funnel):**  
   `https://YOUR_FUNNEL_HOST/csmcrm`  
-  Example: `https://crm-mini.tail34e202.ts.net/csmcrm` (no trailing slash). The proxy must route this path to localhost:3004.
+  Example: `https://crm-mini.tail34e202.ts.net/csmcrm` (no trailing slash). Use a reverse proxy or Tailscale Serve so `/csmcrm` routes to localhost:3004.
 
-- **Option B (second Tailscale node):**  
+- **Option B (separate Funnel URL, same host):**  
+  Expose CSM backend (port 3004) on a **second Funnel port** (443 is often Pilzno; use 8443 or 10000 for CSM):
+  ```bash
+  tailscale funnel --https=8443 --bg 3004
+  ```
+  Then set `BACKEND_API_URL` to the URL for that port, e.g.  
+  `https://crm-mini.tail34e202.ts.net:8443` (no trailing slash).  
+  Check `tailscale funnel status` for the exact URL.
+
+- **Option B (different machine):**  
   `https://OTHER_DEVICE.tail34e202.ts.net`  
   (Funnel URL of the node where this backend runs on port 3004; no trailing slash.)
 

@@ -44,7 +44,7 @@ services:
       GOOGLE_CLIENT_ID: ${CRM2_GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${CRM2_GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: http://localhost:${CRM2_BACKEND_PORT:-3004}/api/auth/google/callback
-      FRONTEND_URL: http://localhost:${CRM2_FRONTEND_PORT:-5173}
+      FRONTEND_URL: http://localhost:${CRM2_FRONTEND_PORT:-5174}
     ports:
       - "${CRM2_BACKEND_PORT:-3004}:3000"
     volumes:
@@ -67,7 +67,7 @@ services:
     environment:
       VITE_API_URL: http://localhost:${CRM2_BACKEND_PORT:-3004}/api
     ports:
-      - "${CRM2_FRONTEND_PORT:-5173}:5173"
+      - "${CRM2_FRONTEND_PORT:-5174}:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules

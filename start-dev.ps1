@@ -15,11 +15,11 @@ if (Test-Path $envPath) {
     }
 }
 
-# Default ports if env not set
-$backendPort  = $env:CRM2_BACKEND_PORT  ; if (-not $backendPort)  { $backendPort  = 3002 }
-$frontendPort = $env:CRM2_FRONTEND_PORT ; if (-not $frontendPort) { $frontendPort = 5173 }
-$pgPort       = $env:CRM2_POSTGRES_PORT ; if (-not $pgPort)       { $pgPort       = 5434 }
-$ollamaPort   = $env:CRM2_OLLAMA_PORT   ; if (-not $ollamaPort)   { $ollamaPort   = 11435 }
+# Default ports (no conflict with Pilzno: backend 3002, postgres 5435)
+$backendPort  = $env:CRM2_BACKEND_PORT  ; if (-not $backendPort)  { $backendPort  = 3004 }
+$frontendPort = $env:CRM2_FRONTEND_PORT ; if (-not $frontendPort) { $frontendPort = 5174 }
+$pgPort       = $env:CRM2_POSTGRES_PORT ; if (-not $pgPort)       { $pgPort       = 5436 }
+$ollamaPort   = $env:CRM2_OLLAMA_PORT   ; if (-not $ollamaPort)   { $ollamaPort   = 11436 }
 
 # Simple port-in-use check
 function Test-PortInUse([int] $port) {
