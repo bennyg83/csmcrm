@@ -30,6 +30,7 @@ class ApiService {
 
     this.api = axios.create({
       baseURL,
+      timeout: 60000, // 60s for slow/cold backend (e.g. Tailscale Funnel)
       headers: {
         'Content-Type': 'application/json',
       },

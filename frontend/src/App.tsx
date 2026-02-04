@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -57,12 +57,30 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 
 
+// GitHub Pages 404.html redirect: restore intended path when we land on /csmcrm/ after 404
+function RedirectFrom404() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const redirect = sessionStorage.redirect;
+    if (redirect) {
+      delete sessionStorage.redirect;
+      try {
+        const url = new URL(redirect);
+        const path = url.pathname.replace(/^\/csmcrm\/?/, '/') || '/';
+        navigate(path + url.search + url.hash, { replace: true });
+      } catch (_) {}
+    }
+  }, [navigate]);
+  return null;
+}
+
 const App: React.FC = () => {
   return (
     <ThemeProvider theme={minimalTheme}>
       <CssBaseline />
       <AuthProvider>
         <Router basename={(import.meta.env.BASE_URL || '/').replace(/\/$/, '') || '/'} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <RedirectFrom404 />
           <Routes>
             <Route
               path="/"
