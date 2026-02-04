@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: crm_user_fb
       POSTGRES_PASSWORD: crm_password_fb
     ports:
-      - "${CRM2_POSTGRES_PORT:-5434}:5432"
+      - "${CRM2_POSTGRES_PORT:-5436}:5432"
     volumes:
       - postgres_data_fb:/var/lib/postgresql/data
     networks:
@@ -43,10 +43,10 @@ services:
       # Google SSO
       GOOGLE_CLIENT_ID: ${CRM2_GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${CRM2_GOOGLE_CLIENT_SECRET}
-      GOOGLE_REDIRECT_URI: http://localhost:${CRM2_BACKEND_PORT:-3002}/api/auth/google/callback
+      GOOGLE_REDIRECT_URI: http://localhost:${CRM2_BACKEND_PORT:-3004}/api/auth/google/callback
       FRONTEND_URL: http://localhost:${CRM2_FRONTEND_PORT:-5173}
     ports:
-      - "${CRM2_BACKEND_PORT:-3002}:3000"
+      - "${CRM2_BACKEND_PORT:-3004}:3000"
     volumes:
       - ./backend:/app
       - /app/node_modules
@@ -65,7 +65,7 @@ services:
       dockerfile: Dockerfile.dev
     working_dir: /app
     environment:
-      VITE_API_URL: http://localhost:${CRM2_BACKEND_PORT:-3002}/api
+      VITE_API_URL: http://localhost:${CRM2_BACKEND_PORT:-3004}/api
     ports:
       - "${CRM2_FRONTEND_PORT:-5173}:5173"
     volumes:

@@ -60,7 +60,7 @@ A modern Customer Relationship Management (CRM) system built with React, TypeScr
 - **Docker Compose** for multi-container orchestration
 - **PostgreSQL 15** as the database
 
-**Connectivity:** This CRM uses its own database and ports. For GitHub Pages frontends and Tailscale routing (one Tailscale install for two projects/frontends), see **TAILSCALE.md**. Port segregation is documented in **PORTS.md**. To host the frontend on GitHub Pages, see **GITHUB_PAGES.md**.
+**Connectivity:** This CRM uses its own database and ports. For GitHub Pages + Tailscale Funnel (full replication from the Pilzno CRM guide, with DB segregation), see **DEPLOYMENT_GUIDE.md**. For one Tailscale install serving two projects, see **TAILSCALE.md**. Port segregation: **PORTS.md**. Quick Pages setup: **GITHUB_PAGES.md**.
 
 ## 📋 Prerequisites
 

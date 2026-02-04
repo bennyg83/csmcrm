@@ -19,18 +19,36 @@ const isProduction = process.env.NODE_ENV === "production";
 app.use(helmet());
 app.use(compression());
 
-// CORS configuration driven by env var (comma separated origins)
-const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:5174,http://localhost:5177,http://localhost:3001,http://localhost:3002")
+// CORS: GitHub Pages (this repo) + env override (comma-separated). Keep segregated from other projects.
+const defaultOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5177",
+  "http://localhost:3001",
+  "http://localhost:3002",
+  "https://bennyg83.github.io",
+  "https://bennyg83.github.io/csmcrm"
+];
+const corsOrigins = (process.env.CORS_ORIGINS || defaultOrigins.join(","))
   .split(",")
-  .map(o => o.trim())
+  .map((o: string) => o.trim())
   .filter(Boolean);
 if (isProduction) {
   corsOrigins.push(`http://localhost:${PORT}`, `http://127.0.0.1:${PORT}`);
 }
 
 app.use(cors({
-  origin: corsOrigins,
-  credentials: true
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const normalized = origin.replace(/\/$/, "");
+    const allowed = corsOrigins.some((a) => normalized.startsWith(a.replace(/\/$/, "")));
+    if (allowed) return callback(null, true);
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Authorization"]
 }));
 app.use(morgan("combined"));
 app.use(express.json({ limit: "10mb" }));

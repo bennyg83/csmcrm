@@ -35,15 +35,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build frontend
+      - name: Build frontend for GitHub Pages
         env:
-          # Set in repo: Settings → Secrets and variables → Actions → Variables
-          VITE_API_URL: ${{ vars.VITE_API_URL || 'http://localhost:3002/api' }}
-          VITE_BASE_PATH: /csmcrm/
-        run: npm run build
+          NODE_ENV: production
+          GITHUB_PAGES: "true"
+          # Tailscale Funnel URL (no trailing slash). Set in repo: Settings → Secrets and variables → Actions → Secrets
+          VITE_API_BASE_URL: ${{ secrets.BACKEND_API_URL }}
+        run: npm run build:pages
 
       - name: SPA fallback for client-side routing
         run: cp dist/index.html dist/404.html
+
+      - name: Ensure .nojekyll (bypass Jekyll on GitHub Pages)
+        run: touch dist/.nojekyll
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

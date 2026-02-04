@@ -18,8 +18,10 @@ class ApiService {
   private api: AxiosInstance;
 
   constructor() {
-    // When served by backend (production bundle), use same-origin /api; otherwise dev backend URL
-    const baseURL = (import.meta.env.VITE_API_URL ?? '').trim() || 'http://localhost:3002/api';
+    // GitHub Pages: VITE_API_BASE_URL (Tailscale Funnel URL, no trailing slash); we append /api. Fallback: VITE_API_URL or localhost.
+    let baseURL = (import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? '').trim();
+    if (baseURL && !baseURL.endsWith('/api')) baseURL = baseURL.replace(/\/$/, '') + '/api';
+    if (!baseURL) baseURL = 'http://localhost:3004/api';
 
     this.api = axios.create({
       baseURL,
