@@ -62,7 +62,7 @@ const App: React.FC = () => {
     <ThemeProvider theme={minimalTheme}>
       <CssBaseline />
       <AuthProvider>
-        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Router basename={(import.meta.env.BASE_URL || '/').replace(/\/$/, '') || '/'} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route
               path="/"
