@@ -141,52 +141,62 @@ const DashboardPage: React.FC = () => {
     setTabValue(newValue);
   };
 
+  // Initial load: single getDashboardMetrics() call (metrics + recent activities only)
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchMetrics = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Fetch accounts for metrics
-        const accountsData = await apiService.getAccounts();
-        setAccounts(accountsData);
-        const tasksData = await apiService.getTasks();
-        setTasks(tasksData);
-        const recentActivities = await apiService.getRecentActivities();
-        
-        // Fetch users for task assignment
-        try {
-          const usersData = await apiService.getAllUsers();
-          setUsers(usersData);
-        } catch (err) {
-          console.warn('Could not fetch users:', err);
-        }
-        
-        // Calculate metrics
-        const totalAccounts = accountsData.length;
-        const totalTasks = tasksData.length;
-        const activeAccounts = accountsData.filter(acc => acc.status === 'active').length;
-        const atRiskAccounts = accountsData.filter(acc => acc.status === 'at-risk').length;
-        
-        setMetrics({
-          totalAccounts,
-          totalTasks,
-          activeAccounts,
-          atRiskAccounts,
-          totalRevenue: accountsData.reduce((sum, acc) => sum + Number(acc.revenue), 0),
-          averageHealthScore: accountsData.reduce((sum, acc) => sum + acc.health, 0) / accountsData.length || 0,
-          recentActivities
-        });
+        const data = await apiService.getDashboardMetrics();
+        setMetrics(data);
       } catch (err) {
-        console.error('Error fetching dashboard data:', err);
+        console.error('Error fetching dashboard metrics:', err);
         setError('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchDashboardData();
+    fetchMetrics();
   }, []);
+
+  // Lazy-load accounts and tasks when user switches to "Accounts & Tasks" tab
+  useEffect(() => {
+    if (tabValue !== 1) return;
+    if (accounts.length > 0 && tasks.length > 0) return;
+    const fetchTab1Data = async () => {
+      try {
+        const [accountsData, tasksData] = await Promise.all([
+          apiService.getAccounts(),
+          apiService.getTasks()
+        ]);
+        setAccounts(accountsData);
+        setTasks(tasksData);
+      } catch (err) {
+        console.warn('Error fetching accounts/tasks for dashboard tab:', err);
+      }
+    };
+    fetchTab1Data();
+  }, [tabValue]);
+
+  // Lazy-load users (and accounts if needed) when user opens the task dialog
+  useEffect(() => {
+    if (!taskDialogOpen) return;
+    const ensureTaskDialogData = async () => {
+      try {
+        if (users.length === 0) {
+          const usersData = await apiService.getAllUsers();
+          setUsers(usersData);
+        }
+        if (accounts.length === 0) {
+          const accountsData = await apiService.getAccounts();
+          setAccounts(accountsData);
+        }
+      } catch (err) {
+        console.warn('Could not fetch users/accounts for task dialog:', err);
+      }
+    };
+    ensureTaskDialogData();
+  }, [taskDialogOpen]);
 
   // Filter data based on selected filters
   const getFilteredData = () => {

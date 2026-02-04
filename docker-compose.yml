@@ -13,8 +13,11 @@ services:
     networks:
       - crm-network-fb
 
-  # Ollama LLM Service (Feature Branch)
+  # Ollama LLM Service (Feature Branch) — optional: only start when needed for document/LLM features
+  # Run with: docker compose --profile ollama up -d
   ollama-fb:
+    profiles:
+      - ollama
     image: ollama/ollama:latest
     ports:
       - "${CRM2_OLLAMA_PORT:-11435}:11434"
@@ -53,7 +56,6 @@ services:
       - ./uploads:/app/uploads
     depends_on:
       - postgres-fb
-      - ollama-fb
     networks:
       - crm-network-fb
     command: ["sh", "-c", "test -f /app/package.json || (echo 'Error: /app/package.json not found. Run docker compose from project root (folder containing docker-compose.yml).' && exit 1) && npm run dev"]

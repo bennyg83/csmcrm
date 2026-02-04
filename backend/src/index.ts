@@ -15,11 +15,7 @@ const app = express();
 const PORT = process.env.PORT || 3002;
 const isProduction = process.env.NODE_ENV === "production";
 
-// Middleware
-app.use(helmet());
-app.use(compression());
-
-// CORS: GitHub Pages (this repo) + env override (comma-separated). Keep segregated from other projects.
+// CORS first so preflight (OPTIONS) always gets CORS headers before any other middleware
 const defaultOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
@@ -29,10 +25,11 @@ const defaultOrigins = [
   "https://bennyg83.github.io",
   "https://bennyg83.github.io/csmcrm"
 ];
-const corsOrigins = (process.env.CORS_ORIGINS || defaultOrigins.join(","))
+const envOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")
   .map((o: string) => o.trim())
   .filter(Boolean);
+const corsOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
 if (isProduction) {
   corsOrigins.push(`http://localhost:${PORT}`, `http://127.0.0.1:${PORT}`);
 }
@@ -40,16 +37,21 @@ if (isProduction) {
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    const normalized = origin.replace(/\/$/, "");
-    const allowed = corsOrigins.some((a) => normalized.startsWith(a.replace(/\/$/, "")));
+    const normalized = origin.replace(/\/$/, "").toLowerCase();
+    const allowed = corsOrigins.some((a) => normalized === a.replace(/\/$/, "").toLowerCase() || normalized.startsWith(a.replace(/\/$/, "").toLowerCase()));
     if (allowed) return callback(null, true);
     callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  exposedHeaders: ["Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  exposedHeaders: ["Authorization"],
+  optionsSuccessStatus: 204
 }));
+
+// Middleware (after CORS so preflight is handled)
+app.use(helmet());
+app.use(compression());
 app.use(morgan("combined"));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
