@@ -181,6 +181,23 @@ export interface DashboardMetrics {
   recentActivities: AccountActivity[];
 }
 
+export interface CSMWorkloadItem {
+  customerSuccessManager: string;
+  accounts: number;
+  atRisk: number;
+  overdueTasks: number;
+  renewals90d: number;
+}
+
+export interface Template {
+  id: string;
+  name: string;
+  body: string;
+  type: 'email' | 'note';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type EntityFileOwnerType = 'task' | 'project' | 'account';
 
 export interface EntityFileWithSource {
