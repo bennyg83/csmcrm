@@ -79,6 +79,11 @@ const AccountsPage: React.FC = () => {
   // Bulk operations state
   const [showBulkOperations, setShowBulkOperations] = useState(false);
   const [accountTiers, setAccountTiers] = useState<any[]>([]);
+  // Table row selection for quick bulk bar (Reassign CSM / Set health)
+  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
+  const [bulkBarCSM, setBulkBarCSM] = useState('');
+  const [bulkBarHealth, setBulkBarHealth] = useState('');
+  const [bulkBarApplying, setBulkBarApplying] = useState(false);
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -169,6 +174,42 @@ const AccountsPage: React.FC = () => {
     
     return true;
   });
+
+  const handleBulkBarSelectAll = () => {
+    if (selectedAccountIds.length === filteredAccounts.length) {
+      setSelectedAccountIds([]);
+    } else {
+      setSelectedAccountIds(filteredAccounts.map((a) => a.id));
+    }
+  };
+
+  const handleBulkBarToggle = (accountId: string) => {
+    setSelectedAccountIds((prev) =>
+      prev.includes(accountId) ? prev.filter((id) => id !== accountId) : [...prev, accountId]
+    );
+  };
+
+  const handleBulkBarApply = async () => {
+    if (selectedAccountIds.length === 0) return;
+    const updates: Partial<Account> = {};
+    if (bulkBarCSM.trim()) updates.customerSuccessManager = bulkBarCSM.trim();
+    const healthNum = bulkBarHealth === '' ? undefined : Number(bulkBarHealth);
+    if (healthNum !== undefined && !Number.isNaN(healthNum)) updates.health = Math.min(100, Math.max(0, healthNum));
+    if (Object.keys(updates).length === 0) return;
+    setBulkBarApplying(true);
+    try {
+      await apiService.bulkUpdateAccounts(selectedAccountIds, updates);
+      setSelectedAccountIds([]);
+      setBulkBarCSM('');
+      setBulkBarHealth('');
+      handleAccountsUpdated();
+    } catch (err) {
+      console.error('Bulk update failed:', err);
+      setError('Bulk update failed');
+    } finally {
+      setBulkBarApplying(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -514,6 +555,15 @@ const AccountsPage: React.FC = () => {
           <Table>
             <TableHead>
               <TableRow>
+                {canWrite('accounts') && (
+                  <TableCell padding="checkbox" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                    <Checkbox
+                      indeterminate={selectedAccountIds.length > 0 && selectedAccountIds.length < filteredAccounts.length}
+                      checked={filteredAccounts.length > 0 && selectedAccountIds.length === filteredAccounts.length}
+                      onChange={handleBulkBarSelectAll}
+                    />
+                  </TableCell>
+                )}
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Account Name</TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Industry</TableCell>
                 <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>AM</TableCell>
@@ -528,7 +578,15 @@ const AccountsPage: React.FC = () => {
             </TableHead>
             <TableBody>
               {filteredAccounts.map((account) => (
-                <TableRow key={account.id} hover>
+                <TableRow key={account.id} hover selected={selectedAccountIds.includes(account.id)}>
+                  {canWrite('accounts') && (
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedAccountIds.includes(account.id)}
+                        onChange={() => handleBulkBarToggle(account.id)}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
@@ -601,6 +659,76 @@ const AccountsPage: React.FC = () => {
           </Table>
         </TableContainer>
       </Card>
+
+      {/* Sticky bulk action bar (Reassign CSM / Set health) */}
+      {selectedAccountIds.length > 0 && canWrite('accounts') && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            bgcolor: 'primary.main',
+            color: 'white',
+            py: 1.5,
+            px: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 3,
+            boxShadow: 3,
+            zIndex: 1100,
+          }}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            {selectedAccountIds.length} selected
+          </Typography>
+          <TextField
+            size="small"
+            placeholder="Reassign CSM"
+            value={bulkBarCSM}
+            onChange={(e) => setBulkBarCSM(e.target.value)}
+            sx={{
+              width: 220,
+              '& .MuiOutlinedInput-root': {
+                bgcolor: 'white',
+                '& fieldset': { borderColor: 'rgba(255,255,255,0.5)' },
+              },
+            }}
+          />
+          <TextField
+            size="small"
+            type="number"
+            placeholder="Set health (0–100)"
+            value={bulkBarHealth}
+            onChange={(e) => setBulkBarHealth(e.target.value)}
+            inputProps={{ min: 0, max: 100 }}
+            sx={{
+              width: 160,
+              '& .MuiOutlinedInput-root': {
+                bgcolor: 'white',
+                '& fieldset': { borderColor: 'rgba(255,255,255,0.5)' },
+              },
+            }}
+          />
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleBulkBarApply}
+            disabled={bulkBarApplying || (!bulkBarCSM.trim() && (bulkBarHealth === '' || Number.isNaN(Number(bulkBarHealth)) || Number(bulkBarHealth) < 0 || Number(bulkBarHealth) > 100))}
+            sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
+          >
+            {bulkBarApplying ? 'Applying...' : 'Apply'}
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => { setSelectedAccountIds([]); setBulkBarCSM(''); setBulkBarHealth(''); }}
+            sx={{ borderColor: 'white', color: 'white', '&:hover': { borderColor: 'grey.300', bgcolor: 'rgba(255,255,255,0.1)' } }}
+          >
+            Clear
+          </Button>
+        </Box>
+      )}
 
       {/* Add Account Dialog */}
       <Dialog 

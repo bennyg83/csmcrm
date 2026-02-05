@@ -3,6 +3,7 @@ import { useParams, Link as RouterLink } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { Contact, Account } from '../types';
 import { usePermissions } from '../utils/rbac';
+import { useAuth } from '../contexts/AuthContext';
 import { Box, Typography, CircularProgress, Alert, Card, CardContent, Avatar, Chip, Divider, Button, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, TextField, FormControl, InputLabel, Select, OutlinedInput, MenuItem, Checkbox, List, ListItem, ListItemText, ListItemText as MuiListItemText, Grid, ToggleButtonGroup, ToggleButton, Paper, Tooltip } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
@@ -12,6 +13,7 @@ import ListIcon from '@mui/icons-material/List';
 import KanbanIcon from '@mui/icons-material/ViewColumn';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import AddIcon from '@mui/icons-material/Add';
 import EmailHistory from '../components/EmailHistory';
 import { Task, Category } from '../types';
 import TaskTable from '../components/TaskTable';
@@ -37,6 +39,7 @@ const ContactDetailPage: React.FC = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Contact>>({});
   const { canUpdate, canCreate } = usePermissions();
+  const { user } = useAuth();
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskStatus, setNewTaskStatus] = useState<'To Do' | 'In Progress' | 'Completed'>('To Do');
@@ -77,6 +80,10 @@ const ContactDetailPage: React.FC = () => {
   const [contactProjects, setContactProjects] = useState<any[]>([]);
   // Notes linked to this contact
   const [contactNotes, setContactNotes] = useState<any[]>([]);
+  // Quick action: Log call (note dialog)
+  const [logCallOpen, setLogCallOpen] = useState(false);
+  const [logCallContent, setLogCallContent] = useState('');
+  const [logCallSaving, setLogCallSaving] = useState(false);
 
   // Filtered tasks for this contact
   const filteredTasks = useMemo(() => {
@@ -535,6 +542,82 @@ const ContactDetailPage: React.FC = () => {
           )}
         </Grid>
       </Grid>
+
+      {/* Quick actions (Phase 1 CSM) */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Typography variant="subtitle2" color="text.secondary" gutterBottom>Quick actions</Typography>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<PhoneIcon />}
+            onClick={() => { setLogCallContent(''); setLogCallOpen(true); }}
+          >
+            Log call
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<EmailIcon />}
+            href={contact?.email ? `mailto:${contact.email}` : undefined}
+            component="a"
+          >
+            Send email
+          </Button>
+          {canCreate('tasks') && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => setShowCreateTask(true)}
+            >
+              Create task
+            </Button>
+          )}
+        </Box>
+      </Paper>
+
+      {/* Log call dialog */}
+      <Dialog open={logCallOpen} onClose={() => setLogCallOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Log call</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            multiline
+            minRows={3}
+            label="Notes"
+            value={logCallContent}
+            onChange={(e) => setLogCallContent(e.target.value)}
+            placeholder="Call notes..."
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLogCallOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={async () => {
+              if (!account || !contact) return;
+              setLogCallSaving(true);
+              try {
+                await apiService.createNote(account.id, { type: 'call', content: logCallContent || '(No notes)', author: user?.name || 'User', contactIds: [contact.id] });
+                setLogCallOpen(false);
+                const data = await apiService.getNotes({ contactId: contact.id });
+                setContactNotes(data);
+              } catch (err) {
+                console.error('Failed to log call:', err);
+                alert('Failed to save call note');
+              } finally {
+                setLogCallSaving(false);
+              }
+            }}
+            disabled={logCallSaving}
+          >
+            {logCallSaving ? 'Saving...' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Projects this contact is involved in */}
       <Box sx={{ mb: 4 }}>

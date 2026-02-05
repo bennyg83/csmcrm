@@ -11,7 +11,9 @@ import {
   LoginResponse,
   ApiResponse,
   DashboardMetrics,
-  HealthScore
+  CSMWorkloadItem,
+  HealthScore,
+  Template
 } from '../types';
 
 class ApiService {
@@ -21,7 +23,7 @@ class ApiService {
     // GitHub Pages: VITE_API_BASE_URL (Tailscale Funnel URL, no trailing slash); we append /api. Fallback: VITE_API_URL or localhost.
     let baseURL = (import.meta.env.VITE_API_BASE_URL ?? import.meta.env.VITE_API_URL ?? '').trim();
     if (baseURL && !baseURL.endsWith('/api')) baseURL = baseURL.replace(/\/$/, '') + '/api';
-    if (!baseURL) baseURL = 'http://localhost:3004/api';
+    if (!baseURL) baseURL = 'http://localhost:3002/api';
 
     // Expose backend origin for console ping (e.g. pingBackend()) — health is at origin/health
     if (typeof window !== 'undefined') {
@@ -453,6 +455,36 @@ class ApiService {
   async getDashboardMetrics(): Promise<DashboardMetrics> {
     const response: AxiosResponse<DashboardMetrics> = await this.api.get('/dashboard/metrics');
     return response.data;
+  }
+
+  async getCSMWorkload(): Promise<CSMWorkloadItem[]> {
+    const response: AxiosResponse<CSMWorkloadItem[]> = await this.api.get('/dashboard/csm-workload');
+    return response.data;
+  }
+
+  async getTemplates(type?: 'email' | 'note'): Promise<Template[]> {
+    const url = type ? `/templates?type=${type}` : '/templates';
+    const response: AxiosResponse<Template[]> = await this.api.get(url);
+    return response.data;
+  }
+
+  async getTemplate(id: string): Promise<Template> {
+    const response: AxiosResponse<Template> = await this.api.get(`/templates/${id}`);
+    return response.data;
+  }
+
+  async createTemplate(template: { name: string; body: string; type: 'email' | 'note' }): Promise<Template> {
+    const response: AxiosResponse<Template> = await this.api.post('/templates', template);
+    return response.data;
+  }
+
+  async updateTemplate(id: string, template: Partial<Pick<Template, 'name' | 'body' | 'type'>>): Promise<Template> {
+    const response: AxiosResponse<Template> = await this.api.patch(`/templates/${id}`, template);
+    return response.data;
+  }
+
+  async deleteTemplate(id: string): Promise<void> {
+    await this.api.delete(`/templates/${id}`);
   }
 
   // Document Processing
