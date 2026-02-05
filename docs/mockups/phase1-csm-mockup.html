@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phase 1 CSM Features – Mockup</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --surface: #fff;
+      --border: #e0e2e6;
+      --primary: #1976d2;
+      --primary-light: #e3f2fd;
+      --success: #2e7d32;
+      --success-bg: #e8f5e9;
+      --warning: #ed6c02;
+      --warning-bg: #fff3e0;
+      --error: #d32f2f;
+      --error-bg: #ffebee;
+      --text: #1a1a1a;
+      --text-muted: #5f6368;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08);
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; }
+    .mockup-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .mockup-header h1 { margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--primary); }
+    .mockup-header p { margin: 0; font-size: 0.875rem; color: var(--text-muted); }
+    .mockup-nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .mockup-nav a {
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      background: var(--primary-light);
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .mockup-nav a:hover { background: var(--primary); color: #fff; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    section { margin-bottom: 48px; }
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text);
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--primary);
+    }
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 600; }
+    .card-body { padding: 20px; }
+
+    /* CSM Workload */
+    .workload-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .workload-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .workload-card h3 { margin: 0 0 12px; font-size: 1rem; }
+    .workload-card .stat { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.875rem; }
+    .workload-card .stat span:last-child { font-weight: 600; color: var(--primary); }
+    .workload-card .stat.at-risk span:last-child { color: var(--warning); }
+    .workload-card .stat.overdue span:last-child { color: var(--error); }
+
+    /* Touchpoint cadence – accounts list */
+    .accounts-toolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-chip { padding: 6px 12px; border-radius: 20px; font-size: 0.8125rem; cursor: pointer; border: 1px solid var(--border); background: var(--surface); }
+    .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #fafafa; font-weight: 600; color: var(--text-muted); }
+    tr:hover { background: #fafafa; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
+    .badge-overdue { background: var(--error-bg); color: var(--error); }
+    .badge-soon { background: var(--warning-bg); color: var(--warning); }
+    .badge-ok { background: var(--success-bg); color: var(--success); }
+    .health-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .health-green { background: var(--success); }
+    .health-yellow { background: var(--warning); }
+    .health-red { background: var(--error); }
+    .link { color: var(--primary); cursor: pointer; text-decoration: none; }
+    .link:hover { text-decoration: underline; }
+
+    /* Renewal pipeline */
+    .renewal-months { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .renewal-month-btn { padding: 8px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 0.875rem; }
+    .renewal-month-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .renewal-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .renewal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .renewal-card .name { font-weight: 600; margin-bottom: 8px; }
+    .renewal-card .row { display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 4px; }
+    .renewal-card .row .label { color: var(--text-muted); }
+
+    /* Account detail – quick actions + templates */
+    .account-detail-mock { display: grid; grid-template-columns: 1fr 280px; gap: 24px; }
+    @media (max-width: 768px) { .account-detail-mock { grid-template-columns: 1fr; } }
+    .quick-actions { display: flex; flex-direction: column; gap: 8px; }
+    .quick-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      text-align: left;
+    }
+    .quick-action-btn:hover { background: var(--primary-light); border-color: var(--primary); }
+    .quick-action-btn .icon { width: 20px; height: 20px; background: var(--primary); border-radius: 4px; opacity: 0.9; }
+    .template-picker { margin-top: 16px; }
+    .template-picker label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 8px; }
+    .template-picker select { width: 100%; padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 0.875rem; }
+    .template-picker .hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; }
+    .compose-area { min-height: 120px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.875rem; }
+
+    /* Bulk actions */
+    .bulk-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 -2px 10px rgba(0,0,0,.15);
+      z-index: 20;
+    }
+    .bulk-bar.hidden { display: none; }
+    .bulk-bar .count { font-weight: 600; }
+    .bulk-bar .actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .bulk-bar select {
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      border: none;
+      background: rgba(255,255,255,.2);
+      color: #fff;
+      font-size: 0.875rem;
+    }
+    .bulk-bar select option { background: #333; color: #fff; }
+    .bulk-bar button {
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.5);
+      background: transparent;
+      color: #fff;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .bulk-bar button.primary { background: #fff; color: var(--primary); border: none; }
+    .bulk-bar button:hover { background: rgba(255,255,255,.2); }
+    .bulk-bar button.primary:hover { background: #f0f0f0; }
+    .mock-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <header class="mockup-header">
+    <div>
+      <h1>Phase 1 CSM Features – Mockup</h1>
+      <p>Touchpoint cadence · Renewal pipeline · CSM workload · Templates · Quick actions · Bulk actions</p>
+    </div>
+    <nav class="mockup-nav">
+      <a href="#workload">CSM Workload</a>
+      <a href="#touchpoint">Touchpoint Cadence</a>
+      <a href="#renewal">Renewal Pipeline</a>
+      <a href="#quick-actions">Quick Actions &amp; Templates</a>
+      <a href="#bulk">Bulk Actions</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <!-- 1. CSM Workload View -->
+    <section id="workload">
+      <h2 class="section-title">1. CSM Workload View</h2>
+      <p class="mock-note">By CSM: # accounts, # at-risk, overdue tasks, upcoming renewals. New dashboard section or page.</p>
+      <div class="workload-grid">
+        <div class="workload-card">
+          <h3>Jane Smith</h3>
+          <div class="stat"><span>Accounts</span><span>24</span></div>
+          <div class="stat at-risk"><span>At-risk</span><span>3</span></div>
+          <div class="stat overdue"><span>Overdue tasks</span><span>2</span></div>
+          <div class="stat"><span>Renewals (90d)</span><span>5</span></div>
+        </div>
+        <div class="workload-card">
+          <h3>Mike Chen</h3>
+          <div class="stat"><span>Accounts</span><span>18</span></div>
+          <div class="stat at-risk"><span>At-risk</span><span>1</span></div>
+          <div class="stat"><span>Overdue tasks</span><span>0</span></div>
+          <div class="stat"><span>Renewals (90d)</span><span>4</span></div>
+        </div>
+        <div class="workload-card">
+          <h3>Sarah Jones</h3>
+          <div class="stat"><span>Accounts</span><span>31</span></div>
+          <div class="stat at-risk"><span>At-risk</span><span>5</span></div>
+          <div class="stat overdue"><span>Overdue tasks</span><span>4</span></div>
+          <div class="stat"><span>Renewals (90d)</span><span>8</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Touchpoint Cadence (Accounts list with Next touch) -->
+    <section id="touchpoint">
+      <h2 class="section-title">2. Touchpoint Cadence</h2>
+      <p class="mock-note">Per-account “next touch” (nextScheduled) and reminders. “Next touch” column; overdue/soon badges.</p>
+      <div class="card">
+        <div class="card-header">Accounts · Next touch</div>
+        <div class="card-body">
+          <div class="accounts-toolbar">
+            <span class="filter-chip active">All</span>
+            <span class="filter-chip">Overdue touch</span>
+            <span class="filter-chip">Next 7 days</span>
+            <span class="filter-chip">Next 30 days</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>CSM</th>
+                <th>Health</th>
+                <th>Next touch</th>
+                <th>Last touch</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a href="#quick-actions" class="link">Acme Corp</a></td>
+                <td>Jane Smith</td>
+                <td><span class="health-dot health-yellow"></span> 62%</td>
+                <td><span class="badge badge-overdue">3 days overdue</span></td>
+                <td>Jan 15, 2026</td>
+              </tr>
+              <tr>
+                <td><a href="#quick-actions" class="link">TechStart Inc</a></td>
+                <td>Mike Chen</td>
+                <td><span class="health-dot health-green"></span> 85%</td>
+                <td><span class="badge badge-soon">In 5 days</span></td>
+                <td>Jan 28, 2026</td>
+              </tr>
+              <tr>
+                <td><a href="#quick-actions" class="link">Global Health Co</a></td>
+                <td>Sarah Jones</td>
+                <td><span class="health-dot health-red"></span> 38%</td>
+                <td><span class="badge badge-overdue">1 week overdue</span></td>
+                <td>Dec 20, 2025</td>
+              </tr>
+              <tr>
+                <td><a href="#quick-actions" class="link">FinanceFirst</a></td>
+                <td>Jane Smith</td>
+                <td><span class="health-dot health-green"></span> 78%</td>
+                <td><span class="badge badge-ok">In 2 weeks</span></td>
+                <td>Jan 22, 2026</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Renewal Pipeline -->
+    <section id="renewal">
+      <h2 class="section-title">3. Renewal Pipeline</h2>
+      <p class="mock-note">List/card view of renewals by month: contract value, health, last contact. Filter by month or “next 90 days”.</p>
+      <div class="card">
+        <div class="card-header">Renewals by month</div>
+        <div class="card-body">
+          <div class="renewal-months">
+            <button type="button" class="renewal-month-btn">Next 90 days</button>
+            <button type="button" class="renewal-month-btn active">Feb 2026</button>
+            <button type="button" class="renewal-month-btn">Mar 2026</button>
+            <button type="button" class="renewal-month-btn">Apr 2026</button>
+          </div>
+          <div class="renewal-cards">
+            <div class="renewal-card">
+              <div class="name">Acme Corp</div>
+              <div class="row"><span class="label">ARR</span><span>$120,000</span></div>
+              <div class="row"><span class="label">Health</span><span><span class="health-dot health-yellow"></span> 62%</span></div>
+              <div class="row"><span class="label">Last contact</span><span>Jan 15, 2026</span></div>
+              <div class="row"><span class="label">Renewal</span><span>Feb 10, 2026</span></div>
+            </div>
+            <div class="renewal-card">
+              <div class="name">TechStart Inc</div>
+              <div class="row"><span class="label">ARR</span><span>$85,000</span></div>
+              <div class="row"><span class="label">Health</span><span><span class="health-dot health-green"></span> 85%</span></div>
+              <div class="row"><span class="label">Last contact</span><span>Jan 28, 2026</span></div>
+              <div class="row"><span class="label">Renewal</span><span>Feb 28, 2026</span></div>
+            </div>
+            <div class="renewal-card">
+              <div class="name">FinanceFirst</div>
+              <div class="row"><span class="label">ARR</span><span>$200,000</span></div>
+              <div class="row"><span class="label">Health</span><span><span class="health-dot health-green"></span> 78%</span></div>
+              <div class="row"><span class="label">Last contact</span><span>Jan 22, 2026</span></div>
+              <div class="row"><span class="label">Renewal</span><span>Feb 15, 2026</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Quick Actions & Templates (Account detail mock) -->
+    <section id="quick-actions">
+      <h2 class="section-title">4. Quick Actions &amp; Email/Note Templates</h2>
+      <p class="mock-note">From account (or contact): one-click Log call, Send email, Create task. When composing: template picker (e.g. QBR follow-up, Onboarding check-in).</p>
+      <div class="account-detail-mock">
+        <div>
+          <div class="card">
+            <div class="card-header">Acme Corp · Account detail (mock)</div>
+            <div class="card-body">
+              <p style="margin:0 0 16px;">Health 62% · CSM Jane Smith · Renewal Feb 10, 2026</p>
+              <p style="margin:0; font-size:0.875rem; color: var(--text-muted);">Below: quick actions open the right modal with account/contact pre-filled. Template picker appears when composing email or note.</p>
+            </div>
+          </div>
+          <div class="card" style="margin-top: 16px;">
+            <div class="card-header">Compose email / Add note (with template)</div>
+            <div class="card-body">
+              <div class="template-picker">
+                <label>Insert template</label>
+                <select id="templateSelect">
+                  <option value="">— None —</option>
+                  <option value="qbr">QBR follow-up</option>
+                  <option value="onboarding">Onboarding check-in</option>
+                  <option value="renewal">Renewal reminder</option>
+                </select>
+                <p class="hint">Choosing a template fills the body below. CSMs send consistent, repeatable messages.</p>
+              </div>
+              <div class="compose-area" style="margin-top: 12px;" contenteditable="true" data-placeholder="Email or note body...">Hi [Contact], Following our QBR, here are the next steps we agreed…</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-header">Quick actions</div>
+            <div class="card-body">
+              <div class="quick-actions">
+                <button type="button" class="quick-action-btn">
+                  <span class="icon"></span>
+                  <span>Log call</span>
+                </button>
+                <button type="button" class="quick-action-btn">
+                  <span class="icon"></span>
+                  <span>Send email</span>
+                </button>
+                <button type="button" class="quick-action-btn">
+                  <span class="icon"></span>
+                  <span>Create task</span>
+                </button>
+              </div>
+              <p class="mock-note" style="margin-top: 12px;">One click opens the right flow with this account (and contact if on contact context) pre-filled so logging is fast.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Bulk Actions -->
+    <section id="bulk">
+      <h2 class="section-title">5. Expanded Bulk Actions</h2>
+      <p class="mock-note">Extend BulkAccountOperations: Reassign CSM, Set health (and later Add tag). Checkboxes on accounts; bar appears when selection &gt; 0.</p>
+      <div class="card">
+        <div class="card-body">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px;"><input type="checkbox" id="selectAll" /></th>
+                <th>Account</th>
+                <th>CSM</th>
+                <th>Health</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox" class="row-select" /></td>
+                <td>Acme Corp</td>
+                <td>Jane Smith</td>
+                <td>62%</td>
+                <td>At risk</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="row-select" /></td>
+                <td>TechStart Inc</td>
+                <td>Mike Chen</td>
+                <td>85%</td>
+                <td>Active</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="row-select" /></td>
+                <td>Global Health Co</td>
+                <td>Sarah Jones</td>
+                <td>38%</td>
+                <td>At risk</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="mock-note">When one or more rows are selected, a bar appears at the bottom of the screen (see below) with: Reassign CSM (dropdown), Set health (number or dropdown), Apply.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Bulk action bar (shown when items selected) -->
+  <div class="bulk-bar hidden" id="bulkBar">
+    <span class="count"><span id="bulkCount">0</span> selected</span>
+    <div class="actions">
+      <select id="bulkAction" aria-label="Bulk action">
+        <option value="">Choose action…</option>
+        <option value="reassign">Reassign CSM</option>
+        <option value="health">Set health</option>
+      </select>
+      <select id="bulkCsm" aria-label="Select CSM" style="display: none;">
+        <option value="">Select CSM</option>
+        <option value="jane">Jane Smith</option>
+        <option value="mike">Mike Chen</option>
+        <option value="sarah">Sarah Jones</option>
+      </select>
+      <input type="number" id="bulkHealth" placeholder="Health 0–100" min="0" max="100" style="display: none; width: 100px; padding: 8px; border: none; border-radius: var(--radius);" />
+      <button type="button" class="primary" id="bulkApply">Apply</button>
+      <button type="button" id="bulkClear">Clear</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const bulkBar = document.getElementById('bulkBar');
+      const bulkCount = document.getElementById('bulkCount');
+      const rowSelects = document.querySelectorAll('.row-select');
+      const selectAll = document.getElementById('selectAll');
+      const bulkAction = document.getElementById('bulkAction');
+      const bulkCsm = document.getElementById('bulkCsm');
+      const bulkHealth = document.getElementById('bulkHealth');
+      const bulkApply = document.getElementById('bulkApply');
+      const bulkClear = document.getElementById('bulkClear');
+
+      function updateBulkBar() {
+        const n = document.querySelectorAll('.row-select:checked').length;
+        bulkCount.textContent = n;
+        bulkBar.classList.toggle('hidden', n === 0);
+      }
+
+      rowSelects.forEach(function (cb) {
+        cb.addEventListener('change', updateBulkBar);
+      });
+      if (selectAll) {
+        selectAll.addEventListener('change', function () {
+          rowSelects.forEach(function (c) { c.checked = selectAll.checked; });
+          updateBulkBar();
+        });
+      }
+
+      bulkAction.addEventListener('change', function () {
+        const v = this.value;
+        bulkCsm.style.display = v === 'reassign' ? 'block' : 'none';
+        bulkHealth.style.display = v === 'health' ? 'block' : 'none';
+      });
+
+      bulkApply.addEventListener('click', function () {
+        var msg = 'Mock: Apply ';
+        if (bulkAction.value === 'reassign') msg += 'Reassign CSM → ' + (bulkCsm.options[bulkCsm.selectedIndex].text || '');
+        else if (bulkAction.value === 'health') msg += 'Set health → ' + bulkHealth.value;
+        else msg += '(choose an action)';
+        alert(msg);
+      });
+
+      bulkClear.addEventListener('click', function () {
+        rowSelects.forEach(function (c) { c.checked = false; });
+        if (selectAll) selectAll.checked = false;
+        bulkBar.classList.add('hidden');
+        bulkCount.textContent = '0';
+      });
+
+      document.getElementById('templateSelect').addEventListener('change', function () {
+        var body = document.querySelector('.compose-area');
+        var templates = {
+          qbr: 'Hi [Contact],\n\nFollowing our QBR, here are the next steps we agreed:\n• …\n• …\n\nBest,\n[CSM]',
+          onboarding: 'Hi [Contact],\n\nQuick check-in as you get started. Do you have everything you need? …',
+          renewal: 'Hi [Contact],\n\nYour renewal is coming up on [Date]. Let\'s schedule a short call to review. …'
+        };
+        if (this.value && templates[this.value]) body.textContent = templates[this.value];
+      });
+
+      document.querySelectorAll('.renewal-month-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('.renewal-month-btn').forEach(function (b) { b.classList.remove('active'); });
+          this.classList.add('active');
+        });
+      });
+
+      document.querySelectorAll('.filter-chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          document.querySelectorAll('.filter-chip').forEach(function (c) { c.classList.remove('active'); });
+          this.classList.add('active');
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

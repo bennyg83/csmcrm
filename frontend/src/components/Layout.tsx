@@ -29,7 +29,8 @@ import {
   CalendarToday as CalendarIcon,
   Email as EmailIcon,
   BarChart as ManagementIcon,
-  FolderOpen as ProjectsIcon
+  FolderOpen as ProjectsIcon,
+  GroupWork as CSMIcon
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -46,6 +47,7 @@ const drawerWidth = 220;
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: <DashboardIcon /> },
+  { path: '/csm', label: 'CSM', icon: <CSMIcon /> },
   { path: '/management', label: 'Management', icon: <ManagementIcon />, management: true },
   { path: '/accounts', label: 'Accounts', icon: <BusinessIcon /> },
   { path: '/projects', label: 'Projects', icon: <ProjectsIcon /> },

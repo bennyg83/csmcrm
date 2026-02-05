@@ -25,6 +25,7 @@ import PasswordResetPage from './pages/PasswordResetPage';
 import ProjectsPage from './pages/ProjectsPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
 import CreateProjectPage from './pages/CreateProjectPage';
+import CSMDashboardPage from './pages/CSMDashboardPage';
 
 // Protected Route Component
 // Minimal theme to avoid React hooks issues
@@ -98,6 +99,16 @@ const App: React.FC = () => {
                 <ProtectedRoute>
                   <Layout>
                     <DashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/csm"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CSMDashboardPage />
                   </Layout>
                 </ProtectedRoute>
               }
