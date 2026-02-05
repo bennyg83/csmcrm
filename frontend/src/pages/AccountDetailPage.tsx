@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Typography, Box, CircularProgress, Alert, Chip, Grid, Paper, Divider, Card, CardContent, Avatar, Button, List, ListItem, ListItemText, Checkbox, TextField, IconButton, Menu, MenuItem, FormControl, InputLabel, Select, OutlinedInput, ListItemText as MuiListItemText, Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, LinearProgress, Switch, FormControlLabel, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
-import { Account, Contact, Task } from '../types';
+import { Account, Contact, Task, TASK_TYPE_OPTIONS } from '../types';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import PersonIcon from '@mui/icons-material/Person';
@@ -121,10 +121,11 @@ const AccountDetailPage: React.FC = () => {
   const [noteHistory, setNoteHistory] = useState<NoteHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
-  const [newAccountTask, setNewAccountTask] = useState<{ title: string; dueDate: string; priority: 'Low' | 'Medium' | 'High'; assignedTo: string[]; assignedToClient: string[] }>({ 
+  const [newAccountTask, setNewAccountTask] = useState<{ title: string; dueDate: string; priority: 'Low' | 'Medium' | 'High'; taskType: string; assignedTo: string[]; assignedToClient: string[] }>({ 
     title: '', 
     dueDate: '', 
     priority: 'Medium',
+    taskType: '',
     assignedTo: [],
     assignedToClient: []
   });
@@ -530,6 +531,7 @@ const AccountDetailPage: React.FC = () => {
           status: 'To Do',
           priority: newAccountTask.priority,
           dueDate: newAccountTask.dueDate,
+          taskType: newAccountTask.taskType || undefined,
           assignedTo: newAccountTask.assignedTo,
           assignedToClient: newAccountTask.assignedToClient,
           accountId: account.id,
@@ -542,7 +544,7 @@ const AccountDetailPage: React.FC = () => {
         
         setShowCreateTask(false);
         // Clear the input
-        setNewAccountTask({ title: '', dueDate: '', priority: 'Medium', assignedTo: [], assignedToClient: [] });
+        setNewAccountTask({ title: '', dueDate: '', priority: 'Medium', taskType: '', assignedTo: [], assignedToClient: [] });
         
         // Refresh account data to get the new task
         if (id) {
@@ -564,6 +566,7 @@ const AccountDetailPage: React.FC = () => {
       status: task.status,
       priority: task.priority,
       dueDate: task.dueDate,
+      taskType: task.taskType ?? '',
       assignedTo: Array.isArray(task.assignedTo) ? task.assignedTo : task.assignedTo ? [task.assignedTo] : [],
       assignedToClient: Array.isArray(task.assignedToClient) ? task.assignedToClient : task.assignedToClient ? [task.assignedToClient] : [],
       accountId: task.accountId,
@@ -1643,6 +1646,14 @@ const AccountDetailPage: React.FC = () => {
               <MenuItem value="High">High</MenuItem>
             </Select>
           </FormControl>
+          <FormControl fullWidth size="small">
+            <InputLabel>Task type</InputLabel>
+            <Select value={newAccountTask.taskType} label="Task type" onChange={e => setNewAccountTask(t => ({ ...t, taskType: e.target.value }))}>
+              {TASK_TYPE_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value || 'none'} value={opt.value}>{opt.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <UserAutocomplete
             label="Assigned To (Internal)"
             value={newAccountTask.assignedTo}
@@ -1706,6 +1717,18 @@ const AccountDetailPage: React.FC = () => {
               <MenuItem value="Low">Low</MenuItem>
               <MenuItem value="Medium">Medium</MenuItem>
               <MenuItem value="High">High</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small">
+            <InputLabel>Task type</InputLabel>
+            <Select 
+              value={editTaskForm.taskType ?? ''} 
+              label="Task type" 
+              onChange={e => setEditTaskForm(prev => ({ ...prev, taskType: e.target.value || undefined }))}
+            >
+              {TASK_TYPE_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value || 'none'} value={opt.value}>{opt.label}</MenuItem>
+              ))}
             </Select>
           </FormControl>
           <TextField 

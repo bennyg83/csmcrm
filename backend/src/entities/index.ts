@@ -17,4 +17,5 @@ export { Lead } from './Lead';
 export { Workflow } from './Workflow';
 export { Report } from './Report';
 export { Role } from './Role';
-export { Permission } from './Permission'; 
+export { Permission } from './Permission';
+export { Template } from './Template'; 

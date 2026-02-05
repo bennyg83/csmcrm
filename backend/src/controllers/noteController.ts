@@ -77,6 +77,13 @@ export const createNote = async (req: Request, res: Response) => {
       await noteRepository.save(savedNote);
     }
 
+    // Update account lastTouchpoint when logging a call or email (see docs/TOUCHPOINT_AND_TASK_TYPE.md)
+    const noteType = (rest as { type?: string }).type;
+    if (noteType === "call" || noteType === "email") {
+      const touchTime = savedNote.createdAt || new Date();
+      await accountRepository.update(accountId, { lastTouchpoint: touchTime });
+    }
+
     const withRelations = await noteRepository.findOne({
       where: { id: savedNote.id },
       relations: ["account", "contacts"],

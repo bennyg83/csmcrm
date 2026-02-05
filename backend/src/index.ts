@@ -126,6 +126,7 @@ import projectRoutes from "./routes/projects";
 import milestoneRoutes from "./routes/milestones";
 import projectContactRoutes from "./routes/projectContacts";
 import entityFileRoutes from "./routes/entityFiles";
+import templateRoutes from "./routes/templates";
 
 // API routes
 //
@@ -161,6 +162,7 @@ function mountApiRoutes(basePath: string) {
   app.use(`${prefix}/api/milestones`, milestoneRoutes);
   app.use(`${prefix}/api/project-contacts`, projectContactRoutes);
   app.use(`${prefix}/api/entity-files`, entityFileRoutes);
+  app.use(`${prefix}/api/templates`, templateRoutes);
 }
 
 mountApiRoutes("");

@@ -83,6 +83,11 @@ export class Task {
   @IsOptional()
   googleCalendarEventId?: string;
 
+  /** Optional task type for touchpoint cadence (e.g. call, meeting). Extensible; non-mandatory. */
+  @Column({ type: "varchar", length: 64, nullable: true })
+  @IsOptional()
+  taskType?: string;
+
   @Column({ type: "int" })
   @Min(0)
   @Max(100)

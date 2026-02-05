@@ -16,7 +16,11 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const userRepository = AppDataSource.getRepository(User);
-    const user = await userRepository.findOne({ where: { email } });
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const user = await userRepository
+      .createQueryBuilder("user")
+      .where("LOWER(TRIM(user.email)) = :email", { email: normalizedEmail })
+      .getOne();
 
     if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -142,6 +146,8 @@ export const createUser = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     // Validate role
     const validRoles = ['admin', 'user', 'manager', 'sales', 'support'];
     if (!validRoles.includes(role)) {
@@ -150,16 +156,19 @@ export const createUser = async (req: Request, res: Response) => {
 
     const userRepository = AppDataSource.getRepository(User);
 
-    // Check if user already exists
-    const existingUser = await userRepository.findOne({ where: { email } });
+    // Check if user already exists (case-insensitive)
+    const existingUser = await userRepository
+      .createQueryBuilder("user")
+      .where("LOWER(TRIM(user.email)) = :email", { email: normalizedEmail })
+      .getOne();
     if (existingUser) {
       return res.status(400).json({ error: 'User with this email already exists' });
     }
 
-    // Create new user (persist role to legacyRole column)
+    // Create new user (persist role to legacyRole column); store email normalized
     const user = new User();
     user.name = name;
-    user.email = email;
+    user.email = normalizedEmail;
     user.legacyRole = role as 'admin' | 'user' | 'manager' | 'sales' | 'support';
     user.isGoogleUser = false;
 
@@ -224,14 +233,17 @@ export const updateUser = async (req: Request, res: Response) => {
     // Update fields if provided
     if (name) user.name = name;
     if (email) {
-      // Check if new email is already taken by another user
-      const existingUser = await userRepository.findOne({ 
-        where: { email, id: Not(userId) } 
-      });
+      const normalizedEmail = String(email).trim().toLowerCase();
+      // Check if new email is already taken by another user (case-insensitive)
+      const existingUser = await userRepository
+        .createQueryBuilder("user")
+        .where("LOWER(TRIM(user.email)) = :email", { email: normalizedEmail })
+        .andWhere("user.id != :userId", { userId })
+        .getOne();
       if (existingUser) {
         return res.status(400).json({ error: 'Email already taken by another user' });
       }
-      user.email = email;
+      user.email = normalizedEmail;
     }
     if (role) {
       const validRoles = ['admin', 'user', 'manager', 'sales', 'support'];

@@ -15,7 +15,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import AddIcon from '@mui/icons-material/Add';
 import EmailHistory from '../components/EmailHistory';
-import { Task, Category } from '../types';
+import { Task, Category, TASK_TYPE_OPTIONS } from '../types';
 import TaskTable from '../components/TaskTable';
 import KanbanBoard from '../components/KanbanBoard';
 import UserAutocomplete from '../components/UserAutocomplete';
@@ -48,6 +48,7 @@ const ContactDetailPage: React.FC = () => {
   const [newTaskProgress, setNewTaskProgress] = useState(0);
   const [newTaskAssignedToInternal, setNewTaskAssignedToInternal] = useState<string[]>([]);
   const [newTaskAssignedToClient, setNewTaskAssignedToClient] = useState<string[]>([]);
+  const [newTaskTaskType, setNewTaskTaskType] = useState('');
   const [showContactKanban, setShowContactKanban] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [taskViewMode, setTaskViewMode] = useState<'table' | 'kanban'>('table');
@@ -213,6 +214,7 @@ const ContactDetailPage: React.FC = () => {
         status: newTaskStatus,
         priority: newTaskPriority,
         dueDate: newTaskDueDate.toISOString(),
+        taskType: newTaskTaskType || undefined,
         assignedTo: newTaskAssignedToInternal,
         assignedToClient: newTaskAssignedToClient.length > 0 ? newTaskAssignedToClient : [contact.id],
         accountId: account.id,
@@ -228,6 +230,7 @@ const ContactDetailPage: React.FC = () => {
       setNewTaskDescription('');
       setNewTaskStatus('To Do');
       setNewTaskPriority('Medium');
+      setNewTaskTaskType('');
       setNewTaskDueDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
       setNewTaskProgress(0);
       setNewTaskAssignedToInternal([]);
@@ -254,6 +257,7 @@ const ContactDetailPage: React.FC = () => {
     setNewTaskProgress(0);
     setNewTaskAssignedToInternal([]);
     setNewTaskAssignedToClient([contact?.id || '']);
+    setNewTaskTaskType('');
     setShowCreateTask(true);
   };
 
@@ -266,6 +270,7 @@ const ContactDetailPage: React.FC = () => {
       status: task.status,
       priority: task.priority,
       dueDate: task.dueDate,
+      taskType: task.taskType ?? '',
       progress: task.progress
     });
     setTaskEditOpen(true);
@@ -879,6 +884,18 @@ const ContactDetailPage: React.FC = () => {
               </FormControl>
             </Grid>
           </Grid>
+          <FormControl size="small" fullWidth>
+            <InputLabel>Task type</InputLabel>
+            <Select
+              value={taskEditForm.taskType ?? ''}
+              onChange={(e) => setTaskEditForm({ ...taskEditForm, taskType: e.target.value || undefined })}
+              input={<OutlinedInput label="Task type" />}
+            >
+              {TASK_TYPE_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value || 'none'} value={opt.value}>{opt.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Grid container spacing={2}>
             <Grid item xs={6}>
               <TextField
@@ -1024,6 +1041,14 @@ const ContactDetailPage: React.FC = () => {
               </FormControl>
             </Grid>
           </Grid>
+          <FormControl fullWidth size="small">
+            <InputLabel>Task type</InputLabel>
+            <Select value={newTaskTaskType} label="Task type" onChange={(e) => setNewTaskTaskType(e.target.value)}>
+              {TASK_TYPE_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value || 'none'} value={opt.value}>{opt.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             label="Due Date"
             type="datetime-local"
@@ -1070,6 +1095,7 @@ const ContactDetailPage: React.FC = () => {
             setNewTaskDescription('');
             setNewTaskStatus('To Do');
             setNewTaskPriority('Medium');
+            setNewTaskTaskType('');
             setNewTaskDueDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
             setNewTaskProgress(0);
             setNewTaskAssignedToInternal([]);

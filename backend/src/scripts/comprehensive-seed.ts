@@ -7,6 +7,7 @@ import { Task } from "../entities/Task";
 import { Note } from "../entities/Note";
 import { HealthScore } from "../entities/HealthScore";
 import { AccountActivity } from "../entities/AccountActivity";
+import { Template } from "../entities/Template";
 
 const accountTiers = [
   {
@@ -546,6 +547,19 @@ async function seedDatabase() {
     );
     console.log("✅ Account activities created");
 
+    // Create note/email templates (Phase 1 CSM)
+    console.log("📄 Creating templates...");
+    const templateRepository = AppDataSource.getRepository(Template);
+    const sampleTemplates = [
+      { name: "QBR follow-up", body: "Hi [Contact],\n\nFollowing our QBR, here are the next steps we agreed:\n• \n• \n\nBest,\n[CSM]", type: "note" as const },
+      { name: "Onboarding check-in", body: "Hi [Contact],\n\nQuick check-in as you get started. Do you have everything you need? Let me know if you'd like to schedule a short call.\n\nBest,\n[CSM]", type: "note" as const },
+      { name: "Renewal reminder", body: "Hi [Contact],\n\nYour renewal is coming up on [Date]. Let's schedule a short call to review. Please reply with a few times that work.\n\nBest,\n[CSM]", type: "note" as const },
+    ];
+    const createdTemplates = await Promise.all(
+      sampleTemplates.map((t) => templateRepository.save(templateRepository.create(t)))
+    );
+    console.log("✅ Templates created");
+
     console.log("\n🎉 Database seeding completed successfully!");
     console.log(`📊 Created:`);
     console.log(`   - ${createdTiers.length} account tiers`);
@@ -555,6 +569,7 @@ async function seedDatabase() {
     console.log(`   - ${createdNotes.length} notes`);
     console.log(`   - ${createdHealthScores.length} health scores`);
     console.log(`   - ${createdActivities.length} account activities`);
+    console.log(`   - ${createdTemplates.length} note templates`);
     console.log(`   - 1 admin user (admin@crm.com / admin123)`);
 
     await AppDataSource.destroy();

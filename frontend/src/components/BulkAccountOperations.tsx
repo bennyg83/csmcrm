@@ -52,6 +52,7 @@ const BulkAccountOperations: React.FC<BulkAccountOperationsProps> = ({
   const [bulkEditForm, setBulkEditForm] = useState({
     tierId: '',
     status: '',
+    health: '' as string | number,
     accountManager: '',
     customerSuccessManager: '',
     salesEngineer: ''
@@ -89,6 +90,8 @@ const BulkAccountOperations: React.FC<BulkAccountOperationsProps> = ({
       // Only include fields that have values
       if (bulkEditForm.tierId) updates.tierId = bulkEditForm.tierId;
       if (bulkEditForm.status) updates.status = bulkEditForm.status as any;
+      const healthNum = bulkEditForm.health === '' ? undefined : Number(bulkEditForm.health);
+      if (healthNum !== undefined && !Number.isNaN(healthNum)) updates.health = Math.min(100, Math.max(0, healthNum));
       if (bulkEditForm.accountManager) updates.accountManager = bulkEditForm.accountManager;
       if (bulkEditForm.customerSuccessManager) updates.customerSuccessManager = bulkEditForm.customerSuccessManager;
       if (bulkEditForm.salesEngineer) updates.salesEngineer = bulkEditForm.salesEngineer;
@@ -110,6 +113,7 @@ const BulkAccountOperations: React.FC<BulkAccountOperationsProps> = ({
       setBulkEditForm({
         tierId: '',
         status: '',
+        health: '',
         accountManager: '',
         customerSuccessManager: '',
         salesEngineer: ''
@@ -401,10 +405,22 @@ const BulkAccountOperations: React.FC<BulkAccountOperationsProps> = ({
                 >
                   <MenuItem value="">No Change</MenuItem>
                   <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="at-risk">At Risk</MenuItem>
                   <MenuItem value="inactive">Inactive</MenuItem>
-                  <MenuItem value="prospect">Prospect</MenuItem>
                 </Select>
               </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                type="number"
+                inputProps={{ min: 0, max: 100 }}
+                label="Set health (0–100)"
+                value={bulkEditForm.health}
+                onChange={(e) => setBulkEditForm(prev => ({ ...prev, health: e.target.value }))}
+                placeholder="Leave empty for no change"
+              />
             </Grid>
             
             <Grid item xs={12} md={6}>
@@ -420,7 +436,7 @@ const BulkAccountOperations: React.FC<BulkAccountOperationsProps> = ({
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                label="Customer Success Manager"
+                label="Reassign CSM (Customer Success Manager)"
                 value={bulkEditForm.customerSuccessManager}
                 onChange={(e) => setBulkEditForm(prev => ({ ...prev, customerSuccessManager: e.target.value }))}
                 placeholder="Leave empty for no change"

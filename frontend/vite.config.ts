@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
     }
   },
   define: {
-    __API_URL__: JSON.stringify(process.env.VITE_API_URL || (process.env.VITE_API_BASE_URL ? `${String(process.env.VITE_API_BASE_URL).replace(/\/$/, '')}/api` : '') || 'http://localhost:3004/api')
+    __API_URL__: JSON.stringify(process.env.VITE_API_URL || (process.env.VITE_API_BASE_URL ? `${String(process.env.VITE_API_BASE_URL).replace(/\/$/, '')}/api` : '') || 'http://localhost:3002/api')
   }
   };
 }); 

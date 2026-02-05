@@ -135,6 +135,7 @@ const LoginPage: React.FC = () => {
               id="email"
               label="Email Address"
               name="email"
+              type="email"
               autoComplete="email"
               autoFocus
               value={email}

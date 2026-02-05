@@ -116,11 +116,20 @@ export interface Task {
   category?: Category;
   projectId?: string;
   milestoneId?: string;
+  /** Optional task type for touchpoint cadence (e.g. call, meeting). Extensible. */
+  taskType?: string;
   progress: number;
   createdAt: string;
   updatedAt: string;
   account?: Account;
 }
+
+/** Task type options for touchpoint cadence (call, meeting, etc.). Extensible over time. */
+export const TASK_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: '', label: '—' },
+  { value: 'call', label: 'Call' },
+  { value: 'meeting', label: 'Meeting' },
+];
 
 // Note types
 export interface Note {

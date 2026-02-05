@@ -13,6 +13,7 @@ import {
   bulkExportAccounts,
   bulkImportAccounts,
 } from "../controllers/accountController";
+import { getAllNotes, createNote } from "../controllers/noteController";
 import { auth } from "../middleware/auth";
 import { requirePermission } from "../middleware/rbac";
 
@@ -24,6 +25,12 @@ router.use(auth);
 // Account routes - Read operations (require accounts.read permission)
 router.get("/", requirePermission("accounts.read"), getAllAccounts);
 router.get("/recent-activities", requirePermission("accounts.read"), getRecentActivities);
+// Account notes – so frontend can call GET/POST /api/accounts/:accountId/notes (Log call, etc.)
+router.get("/:accountId/notes", requirePermission("accounts.read"), (req, res, next) => {
+  req.query = { ...req.query, accountId: req.params.accountId };
+  getAllNotes(req, res, next);
+});
+router.post("/:accountId/notes", requirePermission("accounts.write"), createNote);
 router.get("/:id", requirePermission("accounts.read"), getAccountById);
 
 // Account routes - Write operations (require accounts.write permission)
