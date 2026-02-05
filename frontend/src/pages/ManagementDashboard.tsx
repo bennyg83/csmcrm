@@ -338,8 +338,8 @@ const ManagementDashboard: React.FC = () => {
         },
         
         revenueMetrics: {
-          totalRevenue: filteredAccounts.reduce((sum, acc) => sum + (acc.revenue || 0), 0),
-          monthlyRecurring: filteredAccounts.reduce((sum, acc) => sum + (acc.arr || 0), 0),
+          totalRevenue: filteredAccounts.reduce((sum, acc) => sum + (Number(acc.revenue) || 0), 0),
+          monthlyRecurring: filteredAccounts.reduce((sum, acc) => sum + (Number(acc.arr) || 0), 0),
           growthRate: 12.5, // Calculate based on historical data
           churnRate: 2.3, // Calculate based on account status changes
           revenueByTier: [], // Group by account tier
@@ -569,7 +569,7 @@ const ManagementDashboard: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard
             title="Total ARR"
-            value={`$${Number(metrics?.revenueMetrics.monthlyRecurring ?? 0).toLocaleString()}`}
+            value={`$${(() => { const n = Number(metrics?.revenueMetrics?.monthlyRecurring); return Number.isFinite(n) ? n : 0; })().toLocaleString()}`}
             subtitle="Annual recurring revenue"
             icon={<RevenueIcon />}
             color="success"

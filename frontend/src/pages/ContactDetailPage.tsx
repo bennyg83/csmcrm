@@ -358,6 +358,53 @@ const ContactDetailPage: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         {contact.firstName} {contact.lastName}
       </Typography>
+
+      {/* Quick actions – Phase 1: Log call, Send email, Create task (visible at top) */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+            Quick actions
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<PhoneIcon />}
+              onClick={() => { setLogCallContent(''); setLogCallOpen(true); }}
+            >
+              Log call
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<EmailIcon />}
+              href={contact?.email ? `mailto:${contact.email}` : undefined}
+              component="a"
+            >
+              Send email
+            </Button>
+            {canCreate('tasks') ? (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={() => handleCreateTask()}
+              >
+                Create task
+              </Button>
+            ) : (
+              <Tooltip title="You don't have permission to create tasks">
+                <span>
+                  <Button variant="outlined" size="small" startIcon={<AddIcon />} disabled>
+                    Create task
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
       
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
@@ -542,40 +589,6 @@ const ContactDetailPage: React.FC = () => {
           )}
         </Grid>
       </Grid>
-
-      {/* Quick actions (Phase 1 CSM) */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>Quick actions</Typography>
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<PhoneIcon />}
-            onClick={() => { setLogCallContent(''); setLogCallOpen(true); }}
-          >
-            Log call
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<EmailIcon />}
-            href={contact?.email ? `mailto:${contact.email}` : undefined}
-            component="a"
-          >
-            Send email
-          </Button>
-          {canCreate('tasks') && (
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => setShowCreateTask(true)}
-            >
-              Create task
-            </Button>
-          )}
-        </Box>
-      </Paper>
 
       {/* Log call dialog */}
       <Dialog open={logCallOpen} onClose={() => setLogCallOpen(false)} maxWidth="sm" fullWidth>

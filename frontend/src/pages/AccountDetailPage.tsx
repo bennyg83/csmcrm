@@ -145,6 +145,7 @@ const AccountDetailPage: React.FC = () => {
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [noteForm, setNoteForm] = useState<{ content: string; type: 'general' | 'meeting' | 'call' | 'email'; contactIds: string[] }>({ content: '', type: 'general', contactIds: [] });
   const [noteSaving, setNoteSaving] = useState(false);
+  const [noteTemplates, setNoteTemplates] = useState<{ id: string; name: string; body: string }[]>([]);
 
   const { user } = useAuth();
 
@@ -281,6 +282,11 @@ const AccountDetailPage: React.FC = () => {
     setNoteForm({ content: '', type: 'general', contactIds: [] });
     setNoteDialogOpen(true);
   };
+
+  useEffect(() => {
+    if (!noteDialogOpen) return;
+    apiService.getTemplates('note').then((list) => setNoteTemplates(list)).catch(() => setNoteTemplates([]));
+  }, [noteDialogOpen]);
 
   const handleSaveStructuredNote = async () => {
     if (!account?.id || !noteForm.content.trim()) return;
@@ -740,6 +746,56 @@ const AccountDetailPage: React.FC = () => {
             <Button variant="outlined" size="small" onClick={handleEditOpen}>Edit</Button>
          )}
       </Box>
+
+      {/* Quick actions – Phase 1: Log call, Send email, Create task (visible at top) */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+            Quick actions
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<PhoneIcon />}
+              onClick={() => {
+                setNoteForm((f) => ({ ...f, type: 'call', content: '', contactIds: [] }));
+                setNoteDialogOpen(true);
+              }}
+            >
+              Log call
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<EmailIcon />}
+              href={account.email ? `mailto:${account.email}` : undefined}
+              component="a"
+            >
+              Send email
+            </Button>
+            {canCreate('tasks') ? (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={() => setShowCreateTask(true)}
+              >
+                Create task
+              </Button>
+            ) : (
+              <Tooltip title="You don't have permission to create tasks">
+                <span>
+                  <Button variant="outlined" size="small" startIcon={<AddIcon />} disabled>
+                    Create task
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
       
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={6}>
@@ -1200,6 +1256,25 @@ const AccountDetailPage: React.FC = () => {
       <Dialog open={noteDialogOpen} onClose={() => setNoteDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Add note</DialogTitle>
         <DialogContent>
+          {noteTemplates.length > 0 && (
+            <FormControl fullWidth sx={{ mt: 1 }}>
+              <InputLabel>Insert template</InputLabel>
+              <Select
+                value=""
+                label="Insert template"
+                onChange={(e) => {
+                  const id = e.target.value as string;
+                  const t = noteTemplates.find((x) => x.id === id);
+                  if (t) setNoteForm((f) => ({ ...f, content: t.body }));
+                }}
+              >
+                <MenuItem value="">— None —</MenuItem>
+                {noteTemplates.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
           <TextField
             fullWidth
             label="Content"
@@ -1207,7 +1282,7 @@ const AccountDetailPage: React.FC = () => {
             rows={4}
             value={noteForm.content}
             onChange={(e) => setNoteForm((f) => ({ ...f, content: e.target.value }))}
-            sx={{ mt: 1 }}
+            sx={{ mt: 2 }}
           />
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Type</InputLabel>
