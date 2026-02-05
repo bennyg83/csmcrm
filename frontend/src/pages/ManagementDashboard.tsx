@@ -315,20 +315,25 @@ const ManagementDashboard: React.FC = () => {
           activeUsers: rawUsers.filter(u => u.lastLogin).length,
           averageTasksPerUser: filteredTasks.length / rawUsers.length,
           topPerformers: rawUsers
-            .map(user => ({
-              name: user.name,
-              completedTasks: filteredTasks.filter(t => 
-                Array.isArray(t.assignedTo) 
-                  ? t.assignedTo.includes(user.id) 
-                  : t.assignedTo === user.id
-              ).filter(t => t.status === 'Completed').length,
-              accountsManaged: filteredAccounts.filter(a => 
-                a.accountManager === user.name || 
-                a.customerSuccessManager === user.name ||
-                a.salesEngineer === user.name
-              ).length
-            }))
-            .sort((a, b) => b.completedTasks - a.completedTasks)
+            .map(user => {
+              const userId = (user as { id?: string }).id;
+              const userName = (user as { name?: string }).name ?? '';
+              const isAssignedToUser = (t: { assignedTo?: string | string[]; status?: string }) => {
+                if (!t.assignedTo) return false;
+                const arr = Array.isArray(t.assignedTo) ? t.assignedTo : [t.assignedTo];
+                return arr.some((id: string) => id === userId || id === userName);
+              };
+              return {
+                name: userName,
+                completedTasks: filteredTasks.filter(t => isAssignedToUser(t) && t.status === 'Completed').length,
+                accountsManaged: filteredAccounts.filter(a =>
+                  a.accountManager === userName ||
+                  a.customerSuccessManager === userName ||
+                  a.salesEngineer === userName
+                ).length
+              };
+            })
+            .sort((a, b) => (b.completedTasks + b.accountsManaged) - (a.completedTasks + a.accountsManaged))
             .slice(0, 5)
         },
         
@@ -564,7 +569,7 @@ const ManagementDashboard: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard
             title="Total ARR"
-            value={`$${(metrics?.revenueMetrics.monthlyRecurring || 0).toLocaleString()}`}
+            value={`$${Number(metrics?.revenueMetrics.monthlyRecurring ?? 0).toLocaleString()}`}
             subtitle="Annual recurring revenue"
             icon={<RevenueIcon />}
             color="success"
