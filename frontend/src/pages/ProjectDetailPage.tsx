@@ -50,7 +50,7 @@ const ProjectDetailPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', description: '', status: 'Planning' as const });
   const [addTaskOpen, setAddTaskOpen] = useState(false);
-  const [addTaskForm, setAddTaskForm] = useState({ title: '', dueDate: '', priority: 'Medium' as const });
+  const [addTaskForm, setAddTaskForm] = useState<{ title: string; dueDate: string; priority: 'Low' | 'Medium' | 'High' }>({ title: '', dueDate: '', priority: 'Medium' });
   const [addTaskSaving, setAddTaskSaving] = useState(false);
 
   useEffect(() => {
