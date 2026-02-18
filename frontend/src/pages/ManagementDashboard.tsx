@@ -115,6 +115,8 @@ interface ManagementMetrics {
   // Operational Metrics
   operationalMetrics: {
     totalAccounts: number;
+    /** Accounts with status === 'active' (vs healthyAccounts = health >= 70) */
+    activeAccountsByStatus: number;
     healthyAccounts: number;
     atRiskAccounts: number;
     criticalAccounts: number;
@@ -348,6 +350,7 @@ const ManagementDashboard: React.FC = () => {
         
         operationalMetrics: {
           totalAccounts: filteredAccounts.length,
+          activeAccountsByStatus: filteredAccounts.filter(a => a.status === 'active').length,
           healthyAccounts: filteredAccounts.filter(a => a.health >= 70).length,
           atRiskAccounts: filteredAccounts.filter(a => a.health >= 40 && a.health < 70).length,
           criticalAccounts: filteredAccounts.filter(a => a.health < 40).length,
@@ -579,8 +582,8 @@ const ManagementDashboard: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <MetricCard
             title="Active Accounts"
-            value={metrics?.operationalMetrics.healthyAccounts || 0}
-            subtitle={`${metrics?.operationalMetrics.totalAccounts || 0} total accounts`}
+            value={metrics?.operationalMetrics.activeAccountsByStatus ?? 0}
+            subtitle={`${metrics?.operationalMetrics.totalAccounts ?? 0} total accounts`}
             icon={<BusinessIcon />}
             color="primary"
           />

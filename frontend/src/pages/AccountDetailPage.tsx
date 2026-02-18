@@ -121,14 +121,18 @@ const AccountDetailPage: React.FC = () => {
   const [noteHistory, setNoteHistory] = useState<NoteHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
-  const [newAccountTask, setNewAccountTask] = useState<{ title: string; dueDate: string; priority: 'Low' | 'Medium' | 'High'; taskType: string; assignedTo: string[]; assignedToClient: string[] }>({ 
+  const [newAccountTask, setNewAccountTask] = useState<{ title: string; dueDate: string; priority: 'Low' | 'Medium' | 'High'; taskType: string; projectId: string; milestoneId: string; assignedTo: string[]; assignedToClient: string[] }>({ 
     title: '', 
     dueDate: '', 
     priority: 'Medium',
     taskType: '',
+    projectId: '',
+    milestoneId: '',
     assignedTo: [],
     assignedToClient: []
   });
+  const [accountProjects, setAccountProjects] = useState<any[]>([]);
+  const [accountMilestones, setAccountMilestones] = useState<any[]>([]);
   const [showEditTask, setShowEditTask] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editTaskForm, setEditTaskForm] = useState<Partial<Task>>({});
@@ -171,6 +175,14 @@ const AccountDetailPage: React.FC = () => {
     'align',
     'link', 'image'
   ];
+
+  useEffect(() => {
+    if (account?.id) {
+      apiService.getProjects(account.id).then(setAccountProjects).catch(() => setAccountProjects([]));
+    } else {
+      setAccountProjects([]);
+    }
+  }, [account?.id]);
 
   useEffect(() => {
     const fetchAccount = async () => {
@@ -532,6 +544,8 @@ const AccountDetailPage: React.FC = () => {
           priority: newAccountTask.priority,
           dueDate: newAccountTask.dueDate,
           taskType: newAccountTask.taskType || undefined,
+          projectId: newAccountTask.projectId || undefined,
+          milestoneId: newAccountTask.milestoneId || undefined,
           assignedTo: newAccountTask.assignedTo,
           assignedToClient: newAccountTask.assignedToClient,
           accountId: account.id,
@@ -543,8 +557,8 @@ const AccountDetailPage: React.FC = () => {
         });
         
         setShowCreateTask(false);
-        // Clear the input
-        setNewAccountTask({ title: '', dueDate: '', priority: 'Medium', taskType: '', assignedTo: [], assignedToClient: [] });
+        setNewAccountTask({ title: '', dueDate: '', priority: 'Medium', taskType: '', projectId: '', milestoneId: '', assignedTo: [], assignedToClient: [] });
+        setAccountMilestones([]);
         
         // Refresh account data to get the new task
         if (id) {
@@ -567,12 +581,19 @@ const AccountDetailPage: React.FC = () => {
       priority: task.priority,
       dueDate: task.dueDate,
       taskType: task.taskType ?? '',
+      projectId: task.projectId ?? '',
+      milestoneId: task.milestoneId ?? '',
       assignedTo: Array.isArray(task.assignedTo) ? task.assignedTo : task.assignedTo ? [task.assignedTo] : [],
       assignedToClient: Array.isArray(task.assignedToClient) ? task.assignedToClient : task.assignedToClient ? [task.assignedToClient] : [],
       accountId: task.accountId,
       accountName: task.accountName,
       progress: task.progress || 0
     });
+    if (task.projectId) {
+      apiService.getProjectMilestones(task.projectId).then(setAccountMilestones).catch(() => setAccountMilestones([]));
+    } else {
+      setAccountMilestones([]);
+    }
     setShowEditTask(true);
   };
 
@@ -1654,6 +1675,39 @@ const AccountDetailPage: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+          <FormControl fullWidth size="small">
+            <InputLabel>Project</InputLabel>
+            <Select
+              value={newAccountTask.projectId}
+              label="Project"
+              onChange={(e) => {
+                const projectId = e.target.value as string;
+                setNewAccountTask(t => ({ ...t, projectId, milestoneId: '' }));
+                if (projectId) apiService.getProjectMilestones(projectId).then(setAccountMilestones).catch(() => setAccountMilestones([]));
+                else setAccountMilestones([]);
+              }}
+            >
+              <MenuItem value="">—</MenuItem>
+              {accountProjects.map((p: any) => (
+                <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {newAccountTask.projectId && (
+            <FormControl fullWidth size="small">
+              <InputLabel>Milestone</InputLabel>
+              <Select
+                value={newAccountTask.milestoneId}
+                label="Milestone"
+                onChange={e => setNewAccountTask(t => ({ ...t, milestoneId: e.target.value as string }))}
+              >
+                <MenuItem value="">—</MenuItem>
+                {accountMilestones.map((m: any) => (
+                  <MenuItem key={m.id} value={m.id}>{m.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
           <UserAutocomplete
             label="Assigned To (Internal)"
             value={newAccountTask.assignedTo}
@@ -1731,6 +1785,39 @@ const AccountDetailPage: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+          <FormControl fullWidth size="small">
+            <InputLabel>Project</InputLabel>
+            <Select
+              value={editTaskForm.projectId ?? ''}
+              label="Project"
+              onChange={(e) => {
+                const projectId = (e.target.value as string) || undefined;
+                setEditTaskForm(prev => ({ ...prev, projectId, milestoneId: undefined }));
+                if (projectId) apiService.getProjectMilestones(projectId).then(setAccountMilestones).catch(() => setAccountMilestones([]));
+                else setAccountMilestones([]);
+              }}
+            >
+              <MenuItem value="">—</MenuItem>
+              {accountProjects.map((p: any) => (
+                <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {(editTaskForm.projectId) && (
+            <FormControl fullWidth size="small">
+              <InputLabel>Milestone</InputLabel>
+              <Select
+                value={editTaskForm.milestoneId ?? ''}
+                label="Milestone"
+                onChange={e => setEditTaskForm(prev => ({ ...prev, milestoneId: (e.target.value as string) || undefined }))}
+              >
+                <MenuItem value="">—</MenuItem>
+                {accountMilestones.map((m: any) => (
+                  <MenuItem key={m.id} value={m.id}>{m.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
           <TextField 
             label="Due Date" 
             type="datetime-local" 

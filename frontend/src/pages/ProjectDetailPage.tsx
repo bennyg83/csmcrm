@@ -30,6 +30,7 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import FlagIcon from '@mui/icons-material/Flag';
 import PeopleIcon from '@mui/icons-material/People';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import AddIcon from '@mui/icons-material/Add';
 import { useNavigate, useParams } from 'react-router-dom';
 import { apiService } from '../services/api';
 
@@ -48,6 +49,9 @@ const ProjectDetailPage: React.FC = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', description: '', status: 'Planning' as const });
+  const [addTaskOpen, setAddTaskOpen] = useState(false);
+  const [addTaskForm, setAddTaskForm] = useState({ title: '', dueDate: '', priority: 'Medium' as const });
+  const [addTaskSaving, setAddTaskSaving] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -109,6 +113,36 @@ const ProjectDetailPage: React.FC = () => {
       setError('Failed to delete project');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAddTask = async () => {
+    if (!id || !project || !addTaskForm.title.trim() || !addTaskForm.dueDate) return;
+    setAddTaskSaving(true);
+    try {
+      await apiService.createTask({
+        title: addTaskForm.title.trim(),
+        description: `Task for project ${project.name}`,
+        status: 'To Do',
+        priority: addTaskForm.priority,
+        dueDate: addTaskForm.dueDate,
+        projectId: id,
+        accountId: project.accountId || project.account?.id,
+        accountName: project.account?.name || '',
+        assignedTo: [],
+        subTasks: [],
+        dependencies: [],
+        isDependent: false,
+        progress: 0,
+      });
+      const tasks = await apiService.getTasks({ projectId: id });
+      setProjectTasks(tasks || []);
+      setAddTaskOpen(false);
+      setAddTaskForm({ title: '', dueDate: '', priority: 'Medium' });
+    } catch {
+      setError('Failed to create task');
+    } finally {
+      setAddTaskSaving(false);
     }
   };
 
@@ -257,9 +291,26 @@ const ProjectDetailPage: React.FC = () => {
 
       <Card sx={{ mt: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AssignmentIcon fontSize="small" /> Tasks ({projectTasks.length})
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AssignmentIcon fontSize="small" /> Tasks ({projectTasks.length})
+            </Typography>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setAddTaskForm({
+                  title: '',
+                  dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+                  priority: 'Medium',
+                });
+                setAddTaskOpen(true);
+              }}
+            >
+              Add task
+            </Button>
+          </Box>
           {projectTasks.length === 0 ? (
             <Typography variant="body2" color="text.secondary">
               No tasks linked to this project.
@@ -350,6 +401,55 @@ const ProjectDetailPage: React.FC = () => {
           <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
           <Button variant="contained" color="error" onClick={handleDelete} disabled={saving}>
             {saving ? 'Deleting…' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={addTaskOpen} onClose={() => setAddTaskOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Add task to project</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            This task will be linked to &quot;{project.name}&quot; and the account.
+          </Typography>
+          <TextField
+            fullWidth
+            size="small"
+            label="Title"
+            required
+            value={addTaskForm.title}
+            onChange={(e) => setAddTaskForm((f) => ({ ...f, title: e.target.value }))}
+            placeholder="Task title"
+          />
+          <TextField
+            fullWidth
+            size="small"
+            label="Due date"
+            type="datetime-local"
+            value={addTaskForm.dueDate}
+            onChange={(e) => setAddTaskForm((f) => ({ ...f, dueDate: e.target.value }))}
+            InputLabelProps={{ shrink: true }}
+          />
+          <FormControl fullWidth size="small">
+            <InputLabel>Priority</InputLabel>
+            <Select
+              value={addTaskForm.priority}
+              label="Priority"
+              onChange={(e) => setAddTaskForm((f) => ({ ...f, priority: e.target.value as 'Low' | 'Medium' | 'High' }))}
+            >
+              <MenuItem value="Low">Low</MenuItem>
+              <MenuItem value="Medium">Medium</MenuItem>
+              <MenuItem value="High">High</MenuItem>
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddTaskOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleAddTask}
+            disabled={!addTaskForm.title.trim() || !addTaskForm.dueDate || addTaskSaving}
+          >
+            {addTaskSaving ? 'Creating…' : 'Create task'}
           </Button>
         </DialogActions>
       </Dialog>
